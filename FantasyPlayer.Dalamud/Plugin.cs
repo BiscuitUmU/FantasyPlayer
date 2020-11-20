@@ -128,6 +128,7 @@ namespace FantasyPlayer.Dalamud
         {
             PluginInterface.CommandManager.RemoveHandler(Command);
             PluginInterface.UiBuilder.OnBuildUi -= InterfaceController.Draw;
+            PluginInterface.UiBuilder.OnOpenConfigUi -= OpenConfig;
 
             InterfaceController.Dispose();
             SpotifyState.Dispose();
