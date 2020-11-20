@@ -22,11 +22,8 @@ namespace FantasyPlayer.Dalamud
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
-            var fantasyVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var spotifyVersion = typeof(SpotifyState).Assembly.GetName().Version;
-
             Version =
-                $"FP{fantasyVersion}_SP{spotifyVersion}";
+                $"FP{VersionInfo.VersionNum}{VersionInfo.Type}_SP{Spotify.VersionInfo.VersionNum}{Spotify.VersionInfo.Type}";
             
             PluginInterface = pluginInterface;
 

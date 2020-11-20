@@ -78,6 +78,7 @@
         <Compile Include="Interface\Window\SpotifyWindow.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="VersionInfo.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\FantasyPlayer.Spotify\FantasyPlayer.Spotify.csproj">

@@ -1,6 +1,5 @@
 ﻿using ImGuiNET;
 using System.Numerics;
-using FantasyPlayer.Dalamud.Config;
 
 namespace FantasyPlayer.Dalamud.Interface.Window
 {
@@ -41,12 +40,12 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 if (ImGui.CollapsingHeader("Spotify"))
                 {
-                    if (ImGui.Checkbox("Player Shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
+                    if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
                     {
                         _plugin.Configuration.Save();
                     }
 
-                    if (ImGui.ColorEdit4("Player Color", ref _plugin.Configuration.SpotifySettings.AccentColor))
+                    if (ImGui.ColorEdit4("Player color", ref _plugin.Configuration.SpotifySettings.AccentColor))
                     {
                         _plugin.Configuration.Save();
                     }

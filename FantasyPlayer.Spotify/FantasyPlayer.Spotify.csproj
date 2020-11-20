@@ -68,6 +68,7 @@
         <Compile Include="SpotifyImage.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="SpotifyState.cs" />
+        <Compile Include="VersionInfo.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Include="packages.config" />
