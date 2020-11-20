@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Timers;
 using SpotifyAPI.Web;
 using SpotifyAPI.Web.Auth;
 
@@ -12,10 +10,10 @@ namespace FantasyPlayer.Spotify
     public class SpotifyState
     {
         //TODO: put this in costs!
-        private static readonly Uri LoginUrl = new Uri("http://localhost:2984/callback");
-        private static readonly string ClientId = "543b99137134401580648c4ea2a55b08";
+        private readonly Uri _loginUrl;
+        private readonly string _clientId;
+        private readonly EmbedIOAuthServer _server;
 
-        private static readonly EmbedIOAuthServer Server = new EmbedIOAuthServer(LoginUrl, 2984);
         private SpotifyClient _spotifyClient;
         private PKCEAuthenticator _authenticator;
 
@@ -31,7 +29,8 @@ namespace FantasyPlayer.Spotify
         public FullEpisode LastFullEpisode;
         public Paging<SimplePlaylist> UserPlaylists;
 
-        public delegate void OnPlayerStateUpdateDelegate(CurrentlyPlayingContext currentlyPlaying, FullTrack playbackItem);
+        public delegate void OnPlayerStateUpdateDelegate(CurrentlyPlayingContext currentlyPlaying,
+            FullTrack playbackItem);
 
         public OnPlayerStateUpdateDelegate OnPlayerStateUpdate;
 
@@ -53,6 +52,13 @@ namespace FantasyPlayer.Spotify
         private string _verifier;
         private LoginRequest _loginRequest;
 
+        public SpotifyState(string loginUri, string clientId, int port)
+        {
+            _loginUrl = new Uri(loginUri);
+            _clientId = clientId;
+            _server = new EmbedIOAuthServer(_loginUrl, port);
+        }
+
         private void GenerateCode()
         {
             (_verifier, _challenge) = PKCEUtil.GenerateCodes();
@@ -60,7 +66,7 @@ namespace FantasyPlayer.Spotify
 
         private void CreateLoginRequest()
         {
-            _loginRequest = new LoginRequest(LoginUrl, ClientId, LoginRequest.ResponseType.Code)
+            _loginRequest = new LoginRequest(_loginUrl, _clientId, LoginRequest.ResponseType.Code)
             {
                 CodeChallenge = _challenge,
                 CodeChallengeMethod = "S256",
@@ -70,7 +76,7 @@ namespace FantasyPlayer.Spotify
 
         public async Task Start()
         {
-            _authenticator = new PKCEAuthenticator(ClientId!, TokenResponse);
+            _authenticator = new PKCEAuthenticator(_clientId!, TokenResponse);
 
             var config = SpotifyClientConfig.CreateDefault()
                 .WithAuthenticator(_authenticator);
@@ -118,15 +124,6 @@ namespace FantasyPlayer.Spotify
 
             CurrentlyPlaying = playback;
             LastFullTrack = playbackItem;
-            Console.WriteLine(
-                $"Currently playing: {playback.CurrentlyPlayingType} - {playbackItem.Name} - {playbackItem.Id} - {playbackItem.Album.Images[0].Url}");
-            var started = playback.Timestamp - playback.ProgressMs;
-            var ends = started + playbackItem.DurationMs;
-            Console.WriteLine(
-                $"Progress: {playback.ProgressMs}, Duration: {playbackItem.DurationMs}, Timestamp: {playback.Timestamp}");
-            Console.WriteLine(
-                $"Started: {new DateTime(1970, 1, 1).AddMilliseconds(started).ToLocalTime()}, Ends: {new DateTime(1970, 1, 1).AddMilliseconds(ends).ToLocalTime()}");
-
 
             if (DownloadAlbumArt)
             {
@@ -145,12 +142,9 @@ namespace FantasyPlayer.Spotify
             {
                 var playback = await _spotifyClient.Player.GetCurrentPlayback();
 
-                if (playback == null)
-                    return;
-
                 if (playback.Item.Type != ItemType.Track)
                     return; //TODO: Set invalid state
-
+                
                 var playbackItem = (FullTrack) playback.Item;
 
                 if (CurrentlyPlaying == null)
@@ -166,12 +160,12 @@ namespace FantasyPlayer.Spotify
                     if (inRange)
                         return;
                 }
-
+                
                 UpdatePlayerState(playback, playbackItem);
             }
-            catch (APIException apiException)
+            catch (Exception)
             {
-                //TODO: Maybe alert me?
+                // ignored
             }
         }
 
@@ -179,15 +173,14 @@ namespace FantasyPlayer.Spotify
         {
             GenerateCode();
 
-            await Server.Start();
-            Server.AuthorizationCodeReceived += async (sender, response) =>
+            await _server.Start();
+            _server.AuthorizationCodeReceived += async (sender, response) =>
             {
-                await Server.Stop();
+                await _server.Stop();
                 TokenResponse = await new OAuthClient().RequestToken(
-                    new PKCETokenRequest(ClientId!, response.Code, Server.BaseUri, _verifier)
+                    new PKCETokenRequest(_clientId!, response.Code, _server.BaseUri, _verifier)
                 );
-
-                Console.WriteLine("Got token! " + TokenResponse.AccessToken);
+                
                 await Start();
             };
 
@@ -204,19 +197,32 @@ namespace FantasyPlayer.Spotify
 
         public void PauseOrPlay(bool play)
         {
-            if (CurrentlyPlaying == null) return;
-            if (play)
-                _spotifyClient.Player.ResumePlayback();
+            try
+            {
+                if (CurrentlyPlaying == null) return;
+                if (play)
+                    _spotifyClient.Player.ResumePlayback();
 
-            if (!play)
-                _spotifyClient.Player.PausePlayback();
+                if (!play)
+                    _spotifyClient.Player.PausePlayback();
+            }
+            catch (APIException)
+            {
+            }
         }
 
         public async void ToggleShuffle()
         {
-            //CurrentlyPlaying.ShuffleState = !CurrentlyPlaying.ShuffleState;
-            var shuffle = new PlayerShuffleRequest(!CurrentlyPlaying.ShuffleState);
-            await _spotifyClient.Player.SetShuffle(shuffle);
+            try
+            {
+                if (CurrentlyPlaying == null) return;
+                //CurrentlyPlaying.ShuffleState = !CurrentlyPlaying.ShuffleState;
+                var shuffle = new PlayerShuffleRequest(!CurrentlyPlaying.ShuffleState);
+                await _spotifyClient.Player.SetShuffle(shuffle);
+            }
+            catch (APIException)
+            {
+            }
         }
 
         public async void SwapRepeatState()
@@ -229,25 +235,38 @@ namespace FantasyPlayer.Spotify
                 _ => PlayerSetRepeatRequest.State.Off
             };
 
-            //CurrentlyPlaying.RepeatState = state.ToString().ToLower();
-            var repeat = new PlayerSetRepeatRequest(state);
-            await _spotifyClient.Player.SetRepeat(repeat);
+            try
+            {
+                if (CurrentlyPlaying == null) return;
+                //CurrentlyPlaying.RepeatState = state.ToString().ToLower();
+                var repeat = new PlayerSetRepeatRequest(state);
+                await _spotifyClient.Player.SetRepeat(repeat);
+            }
+            catch (APIException)
+            {
+            }
         }
 
         public void Skip(bool forward)
         {
-            if (CurrentlyPlaying == null) return;
-            if (forward)
-                _spotifyClient.Player.SkipNext();
+            try
+            {
+                if (CurrentlyPlaying == null) return;
+                if (forward)
+                    _spotifyClient.Player.SkipNext();
 
-            if (!forward)
-                _spotifyClient.Player.SkipPrevious();
+                if (!forward)
+                    _spotifyClient.Player.SkipPrevious();
+            }
+            catch (APIException)
+            {
+            }
         }
 
         public void Dispose()
         {
             _stateThread?.Abort();
-            Server?.Stop();
+            _server?.Stop();
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using Dalamud.Game.Command;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Config;
@@ -11,14 +12,22 @@ namespace FantasyPlayer.Dalamud
     {
         public string Name => "FantasyPlayer";
         public const string Command = "/pfp";
-        
+
         private InterfaceController InterfaceController { get; set; }
         public DalamudPluginInterface PluginInterface { get; private set; }
         public Configuration Configuration { get; set; }
         public SpotifyState SpotifyState { get; set; }
 
+        public string Version { get; private set; }
+
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
+            var fantasyVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var spotifyVersion = typeof(SpotifyState).Assembly.GetName().Version;
+
+            Version =
+                $"FP{fantasyVersion}_SP{spotifyVersion}";
+            
             PluginInterface = pluginInterface;
 
             Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -30,7 +39,8 @@ namespace FantasyPlayer.Dalamud
             });
 
             //Setup player
-            SpotifyState = new SpotifyState();
+            SpotifyState = new SpotifyState(Constants.SpotifyLoginUri, Constants.SpotifyClientId,
+                Constants.SpotifyLoginPort);
 
             if (Configuration.SpotifySettings.AlbumShown == false)
                 SpotifyState.DownloadAlbumArt = false;
@@ -121,7 +131,7 @@ namespace FantasyPlayer.Dalamud
         {
             PluginInterface.CommandManager.RemoveHandler(Command);
             PluginInterface.UiBuilder.OnBuildUi -= InterfaceController.Draw;
-            
+
             InterfaceController.Dispose();
             SpotifyState.Dispose();
         }

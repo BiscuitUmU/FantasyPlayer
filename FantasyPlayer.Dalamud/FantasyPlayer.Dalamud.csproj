@@ -71,6 +71,7 @@
     <ItemGroup>
         <Compile Include="Config\Configuration.cs" />
         <Compile Include="Config\SpotifySettings.cs" />
+        <Compile Include="Constants.cs" />
         <Compile Include="Interface\InterfaceController.cs" />
         <Compile Include="Interface\InterfaceUtils.cs" />
         <Compile Include="Interface\Window\SettingsWindow.cs" />

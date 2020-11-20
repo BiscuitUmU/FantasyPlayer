@@ -109,7 +109,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 ImGui.Text("Duration: " + track.DurationMs);
                 ImGui.Separator();
                 ImGui.Text("PercentND: " + percentNDelta);
-                ImGui.Text("PercentWS: " + percentWDelta);
+                ImGui.Text("PercentWD: " + percentWDelta);
                 ImGui.Text("Delta: " + _progressDelta);
             }
 
@@ -128,8 +128,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (ImGui.BeginPopupContextWindow())
             {
-                ImGui.MenuItem("Show Player", null, ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown);
-                ImGui.MenuItem("Show Config", null, ref _plugin.Configuration.ConfigShown);
+                ImGui.MenuItem("Show player", null, ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown);
+                ImGui.MenuItem("Show config", null, ref _plugin.Configuration.ConfigShown);
 
                 ImGui.EndPopup();
             }
@@ -188,7 +188,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                                (ImGui.GetFontSize() + ImGui.CalcTextSize(FontAwesomeIcon.Random.ToIconString()).X));
 
                 if (playing.ShuffleState)
-                    ImGui.PushStyleColor(ImGuiCol.Text, InterfaceUtils.SpotifyColor);
+                    ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
 
                 if (ImGui.Button(FontAwesomeIcon.Random.ToIconString()))
                     _plugin.SpotifyState.ToggleShuffle();
@@ -197,7 +197,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     ImGui.PopStyleColor();
 
                 if (playing.RepeatState != "off")
-                    ImGui.PushStyleColor(ImGuiCol.Text, InterfaceUtils.SpotifyColor);
+                    ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
 
                 var buttonIcon = FontAwesomeIcon.Retweet.ToIconString();
 
@@ -223,7 +223,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 //////////////// Progress Bar ////////////////
 
-                ImGui.PushStyleColor(ImGuiCol.PlotHistogram, InterfaceUtils.SpotifyColor);
+                ImGui.PushStyleColor(ImGuiCol.PlotHistogram, _plugin.Configuration.SpotifySettings.AccentColor);
                 ImGui.ProgressBar(percent / 100f, new Vector2(-1, 2f));
                 ImGui.PopStyleColor();
 
