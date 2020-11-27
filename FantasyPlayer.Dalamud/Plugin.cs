@@ -98,6 +98,12 @@ namespace FantasyPlayer.Dalamud
                 SpotifyState.ToggleShuffle();
             }
 
+            if (int.TryParse(arguments, out int volume)) 
+            {
+                SpotifyState.SetVolume(volume);
+                DisplayMessage($"Set volume to {volume}.");
+            }
+
             if (arguments == "help")
             {
                 PluginInterface.Framework.Gui.Chat.Print("Fantasy Player Command Help:\n"
@@ -107,7 +113,8 @@ namespace FantasyPlayer.Dalamud
                                                          + "back - to go back a track.\n"
                                                          + "pause/stop - to stop playback.\n"
                                                          + "play - to continue playback.\n"
-                                                         + "shuffle - to toggle shuffle.");
+                                                         + "shuffle - to toggle shuffle.\n"
+                                                         + "any number between 0 and 100 - to set volume.");
             }
         }
 

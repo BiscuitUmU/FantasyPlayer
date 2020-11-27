@@ -263,6 +263,13 @@ namespace FantasyPlayer.Spotify
             }
         }
 
+        public async void SetVolume(int volume)
+        {
+            if (volume > 100 || volume < 0) return;
+            var request = new PlayerVolumeRequest(volume);
+            await _spotifyClient.Player.SetVolume(request);
+        }
+
         public void Dispose()
         {
             _stateThread?.Abort();
