@@ -14,6 +14,8 @@ namespace FantasyPlayer.Dalamud.Config
         public bool SpotifyWindowShown = true;
         public bool AlbumShown = false;
         public bool CompactPlayer = false;
+        public bool NoButtons = false;
+        public bool DisableInput = false;
         public bool PlayerLocked = false;
         public bool DebugWindowOpen;
         public SpotifySettings()

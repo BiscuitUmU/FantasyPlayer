@@ -25,6 +25,9 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private readonly Vector2 _windowSizeWithAlbum = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
             149 * ImGui.GetIO().FontGlobalScale);
 
+        private readonly Vector2 _windowSizeNoButtons = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
+            62 * ImGui.GetIO().FontGlobalScale);
+
         private readonly Vector2 _windowSizeCompact = new Vector2(179 * ImGui.GetIO().FontGlobalScale,
             39 * ImGui.GetIO().FontGlobalScale);
 
@@ -143,18 +146,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
         private void MainWindow()
         {
-            ImGui.SetNextWindowSize(_plugin.Configuration.SpotifySettings.CompactPlayer
-                ? _windowSizeCompact
-                : _windowSizeWithoutAlbum);
-
             ImGui.SetNextWindowBgAlpha(_plugin.Configuration.SpotifySettings.Transparency);
+            
+            ImGui.SetNextWindowSize(_windowSizeWithoutAlbum);
+            
+            if (_plugin.Configuration.SpotifySettings.CompactPlayer)
+                ImGui.SetNextWindowSize(_windowSizeCompact);
+            
+            if (_plugin.Configuration.SpotifySettings.NoButtons)
+                ImGui.SetNextWindowSize(_windowSizeNoButtons);
 
             var lockFlags = (_plugin.Configuration.SpotifySettings.PlayerLocked)
                 ? ImGuiWindowFlags.NoMove
                 : ImGuiWindowFlags.None;
 
+            var clickThroughFlags = (_plugin.Configuration.SpotifySettings.DisableInput)
+                ? ImGuiWindowFlags.NoMouseInputs
+                : ImGuiWindowFlags.None;
+
             if (!ImGui.Begin("Spotify Player",
-                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | lockFlags)) return;
+                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | lockFlags | clickThroughFlags)) return;
 
             //////////////// Right click popup ////////////////
 
@@ -203,58 +214,61 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 var artists = track.Artists.Aggregate("", (current, artist) => current + (artist.Name + ", "));
 
-                //////////////// Play and Pause ////////////////
+                if (!_plugin.Configuration.SpotifySettings.NoButtons)
+                {
+                    //////////////// Play and Pause ////////////////
 
-                var stateIcon = (playing.IsPlaying)
-                    ? FontAwesomeIcon.Pause.ToIconString()
-                    : FontAwesomeIcon.Play.ToIconString();
+                    var stateIcon = (playing.IsPlaying)
+                        ? FontAwesomeIcon.Pause.ToIconString()
+                        : FontAwesomeIcon.Play.ToIconString();
 
-                ImGui.PushFont(UiBuilder.IconFont);
+                    ImGui.PushFont(UiBuilder.IconFont);
 
-                if (ImGui.Button(FontAwesomeIcon.Backward.ToIconString()))
-                    _plugin.SpotifyState.Skip(false);
+                    if (ImGui.Button(FontAwesomeIcon.Backward.ToIconString()))
+                        _plugin.SpotifyState.Skip(false);
 
-                if (InterfaceUtils.ButtonCentered(stateIcon))
-                    _plugin.SpotifyState.PauseOrPlay(!playing.IsPlaying);
+                    if (InterfaceUtils.ButtonCentered(stateIcon))
+                        _plugin.SpotifyState.PauseOrPlay(!playing.IsPlaying);
 
-                //////////////// Shuffle and Repeat ////////////////
+                    //////////////// Shuffle and Repeat ////////////////
 
-                ImGui.SameLine(ImGui.GetWindowSize().X / 2 +
-                               (ImGui.GetFontSize() + ImGui.CalcTextSize(FontAwesomeIcon.Random.ToIconString()).X));
+                    ImGui.SameLine(ImGui.GetWindowSize().X / 2 +
+                                   (ImGui.GetFontSize() + ImGui.CalcTextSize(FontAwesomeIcon.Random.ToIconString()).X));
 
-                if (playing.ShuffleState)
-                    ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
+                    if (playing.ShuffleState)
+                        ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
 
-                if (ImGui.Button(FontAwesomeIcon.Random.ToIconString()))
-                    _plugin.SpotifyState.Shuffle(!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState);
+                    if (ImGui.Button(FontAwesomeIcon.Random.ToIconString()))
+                        _plugin.SpotifyState.Shuffle(!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState);
 
-                if (playing.ShuffleState)
-                    ImGui.PopStyleColor();
+                    if (playing.ShuffleState)
+                        ImGui.PopStyleColor();
 
-                if (playing.RepeatState != "off")
-                    ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
+                    if (playing.RepeatState != "off")
+                        ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
 
-                var buttonIcon = FontAwesomeIcon.Retweet.ToIconString();
+                    var buttonIcon = FontAwesomeIcon.Retweet.ToIconString();
 
-                if (playing.RepeatState == "track")
-                    buttonIcon = FontAwesomeIcon.Music.ToIconString();
+                    if (playing.RepeatState == "track")
+                        buttonIcon = FontAwesomeIcon.Music.ToIconString();
 
-                ImGui.SameLine(ImGui.GetWindowSize().X / 2 -
-                               (ImGui.GetFontSize() + ImGui.CalcTextSize(buttonIcon).X +
-                                ImGui.CalcTextSize(FontAwesomeIcon.Random.ToIconString()).X));
+                    ImGui.SameLine(ImGui.GetWindowSize().X / 2 -
+                                   (ImGui.GetFontSize() + ImGui.CalcTextSize(buttonIcon).X +
+                                    ImGui.CalcTextSize(FontAwesomeIcon.Random.ToIconString()).X));
 
-                if (ImGui.Button(buttonIcon))
-                    _plugin.SpotifyState.SwapRepeatState();
+                    if (ImGui.Button(buttonIcon))
+                        _plugin.SpotifyState.SwapRepeatState();
 
-                if (playing.RepeatState != "off")
-                    ImGui.PopStyleColor();
+                    if (playing.RepeatState != "off")
+                        ImGui.PopStyleColor();
 
-                ImGui.SameLine(ImGui.GetWindowSize().X - 32f);
-                if (ImGui.Button(FontAwesomeIcon.Forward.ToIconString()))
-                    _plugin.SpotifyState.Skip(true);
+                    ImGui.SameLine(ImGui.GetWindowSize().X - 32f);
+                    if (ImGui.Button(FontAwesomeIcon.Forward.ToIconString()))
+                        _plugin.SpotifyState.Skip(true);
 
 
-                ImGui.PopFont();
+                    ImGui.PopFont();
+                }
 
                 if (!_plugin.Configuration.SpotifySettings.CompactPlayer)
                 {
@@ -372,10 +386,10 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             {
                 if (boolValue)
                     _plugin.DisplayMessage("Turned on shuffle.");
-                
+
                 if (!boolValue)
                     _plugin.DisplayMessage("Turned off shuffle.");
-                
+
                 _plugin.SpotifyState.Shuffle(boolValue);
             }
 
@@ -383,10 +397,10 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             {
                 if (!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState)
                     _plugin.DisplayMessage("Turned on shuffle.");
-                
+
                 if (_plugin.SpotifyState.CurrentlyPlaying.ShuffleState)
                     _plugin.DisplayMessage("Turned off shuffle.");
-                
+
                 _plugin.SpotifyState.Shuffle(!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState);
             }
         }

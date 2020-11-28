@@ -26,7 +26,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private void MainWindow()
         {
             ImGui.SetNextWindowSize(new Vector2(401 * ImGui.GetIO().FontGlobalScale,
-                349 * ImGui.GetIO().FontGlobalScale));
+                409 * ImGui.GetIO().FontGlobalScale));
 
             if (ImGui.Begin("Fantasy Player Config", ref _plugin.Configuration.ConfigShown, ImGuiWindowFlags.NoResize))
             {
@@ -44,9 +44,18 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 {
                     if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.SpotifySettings.CompactPlayer))
                     {
+                        if (_plugin.Configuration.SpotifySettings.NoButtons)
+                            _plugin.Configuration.SpotifySettings.NoButtons = false;
                         _plugin.Configuration.Save();
                     }
-                    
+
+                    if (ImGui.Checkbox("Hide buttons", ref _plugin.Configuration.SpotifySettings.NoButtons))
+                    {
+                        if (_plugin.Configuration.SpotifySettings.CompactPlayer)
+                            _plugin.Configuration.SpotifySettings.CompactPlayer = false;
+                        _plugin.Configuration.Save();
+                    }
+
                     ImGui.Separator();
                     
                     if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
@@ -55,6 +64,13 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     }
                     
                     if (ImGui.Checkbox("Player locked", ref _plugin.Configuration.SpotifySettings.PlayerLocked))
+                    {
+                        _plugin.Configuration.Save();
+                    }
+                    
+                    ImGui.Separator();
+                    
+                    if (ImGui.Checkbox("Disable input (Click through)", ref _plugin.Configuration.SpotifySettings.DisableInput))
                     {
                         _plugin.Configuration.Save();
                     }
