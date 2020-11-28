@@ -17,6 +17,7 @@ namespace FantasyPlayer.Dalamud
         public DalamudPluginInterface PluginInterface { get; private set; }
         public Configuration Configuration { get; set; }
         public SpotifyState SpotifyState { get; set; }
+        public CommandHelper CommandHelper { get; set; }
 
         public string Version { get; private set; }
 
@@ -32,7 +33,7 @@ namespace FantasyPlayer.Dalamud
 
             PluginInterface.CommandManager.AddHandler(Command, new CommandInfo(OnCommand)
             {
-                HelpMessage = "Opens the configuration window for FantasyPlayer"
+                HelpMessage = "Run commands for Fantasy Player"
             });
 
             //Setup player
@@ -41,9 +42,10 @@ namespace FantasyPlayer.Dalamud
 
             if (Configuration.SpotifySettings.AlbumShown == false)
                 SpotifyState.DownloadAlbumArt = false;
+            
+            CommandHelper = new CommandHelper(pluginInterface, this);
 
             InterfaceController = new InterfaceController(this);
-
 
             PluginInterface.UiBuilder.OnBuildUi += InterfaceController.Draw;
             PluginInterface.UiBuilder.OnOpenConfigUi += OpenConfig;
@@ -51,71 +53,7 @@ namespace FantasyPlayer.Dalamud
 
         private void OnCommand(string command, string arguments)
         {
-            if (arguments == String.Empty)
-                Configuration.ConfigShown = !Configuration.ConfigShown;
-            if (arguments == "settings" || arguments == "config")
-                Configuration.ConfigShown = !Configuration.ConfigShown;
-            if (arguments == "display")
-                Configuration.SpotifySettings.SpotifyWindowShown = !Configuration.SpotifySettings.SpotifyWindowShown;
-
-            if (!SpotifyState.IsLoggedIn && SpotifyState.CurrentlyPlaying != null)
-                return;
-
-            if (arguments == "next" || arguments == "skip")
-            {
-                DisplayMessage("Skipping to next track.");
-                SpotifyState.Skip(true);
-            }
-
-            if (arguments == "back")
-            {
-                DisplayMessage("Going back a track.");
-                SpotifyState.Skip(false);
-            }
-
-            if (arguments == "pause" || arguments == "stop")
-            {
-                DisplayMessage("Paused playback.");
-                SpotifyState.PauseOrPlay(false);
-            }
-
-            if (arguments == "play")
-            {
-                string displayInfo = null;
-                if (SpotifyState.LastFullTrack != null)
-                    displayInfo = SpotifyState.LastFullTrack.Name;
-                DisplayMessage($"Playing '{displayInfo}'...");
-                SpotifyState.PauseOrPlay(true);
-            }
-
-            if (arguments == "shuffle")
-            {
-                if (SpotifyState.CurrentlyPlaying != null && SpotifyState.CurrentlyPlaying.ShuffleState)
-                    DisplayMessage("Turned off shuffle.");
-                if (SpotifyState.CurrentlyPlaying != null && !SpotifyState.CurrentlyPlaying.ShuffleState)
-                    DisplayMessage("Turned on shuffle.");
-
-                SpotifyState.ToggleShuffle();
-            }
-
-            if (int.TryParse(arguments, out int volume)) 
-            {
-                SpotifyState.SetVolume(volume);
-                DisplayMessage($"Set volume to {volume}.");
-            }
-
-            if (arguments == "help")
-            {
-                PluginInterface.Framework.Gui.Chat.Print("Fantasy Player Command Help:\n"
-                                                         + "display - toggle player display.\n"
-                                                         + "settings - to change settings.\n"
-                                                         + "next/skip - to skip to next track.\n"
-                                                         + "back - to go back a track.\n"
-                                                         + "pause/stop - to stop playback.\n"
-                                                         + "play - to continue playback.\n"
-                                                         + "shuffle - to toggle shuffle.\n"
-                                                         + "any number between 0 and 100 - to set volume.");
-            }
+            CommandHelper.ParseCommand(arguments);
         }
 
         public void DisplayMessage(string message)

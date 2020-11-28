@@ -20,6 +20,8 @@ namespace FantasyPlayer.Spotify
         public bool DownloadAlbumArt;
         public bool IsLoggedIn;
 
+
+        public string DeviceId;
         public SpotifyImage CurrentImage;
 
         public PKCETokenResponse TokenResponse;
@@ -122,6 +124,7 @@ namespace FantasyPlayer.Spotify
             if (LastFullTrack != null)
                 lastId = LastFullTrack.Id;
 
+            DeviceId = playback.Device.Id;
             CurrentlyPlaying = playback;
             LastFullTrack = playbackItem;
 
@@ -144,7 +147,7 @@ namespace FantasyPlayer.Spotify
 
                 if (playback.Item.Type != ItemType.Track)
                     return; //TODO: Set invalid state
-                
+
                 var playbackItem = (FullTrack) playback.Item;
 
                 if (CurrentlyPlaying == null)
@@ -160,7 +163,7 @@ namespace FantasyPlayer.Spotify
                     if (inRange)
                         return;
                 }
-                
+
                 UpdatePlayerState(playback, playbackItem);
             }
             catch (Exception)
@@ -180,7 +183,7 @@ namespace FantasyPlayer.Spotify
                 TokenResponse = await new OAuthClient().RequestToken(
                     new PKCETokenRequest(_clientId!, response.Code, _server.BaseUri, _verifier)
                 );
-                
+
                 await Start();
             };
 
@@ -201,23 +204,23 @@ namespace FantasyPlayer.Spotify
             {
                 if (CurrentlyPlaying == null) return;
                 if (play)
-                    _spotifyClient.Player.ResumePlayback();
+                    _spotifyClient.Player.ResumePlayback(new PlayerResumePlaybackRequest {DeviceId = DeviceId});
 
                 if (!play)
-                    _spotifyClient.Player.PausePlayback();
+                    _spotifyClient.Player.PausePlayback(new PlayerPausePlaybackRequest {DeviceId = DeviceId});
             }
             catch (APIException)
             {
             }
         }
 
-        public async void ToggleShuffle()
+        public async void Shuffle(bool value)
         {
             try
             {
                 if (CurrentlyPlaying == null) return;
                 //CurrentlyPlaying.ShuffleState = !CurrentlyPlaying.ShuffleState;
-                var shuffle = new PlayerShuffleRequest(!CurrentlyPlaying.ShuffleState);
+                var shuffle = new PlayerShuffleRequest(value) {DeviceId = DeviceId};
                 await _spotifyClient.Player.SetShuffle(shuffle);
             }
             catch (APIException)
@@ -239,7 +242,7 @@ namespace FantasyPlayer.Spotify
             {
                 if (CurrentlyPlaying == null) return;
                 //CurrentlyPlaying.RepeatState = state.ToString().ToLower();
-                var repeat = new PlayerSetRepeatRequest(state);
+                var repeat = new PlayerSetRepeatRequest(state) {DeviceId = DeviceId};
                 await _spotifyClient.Player.SetRepeat(repeat);
             }
             catch (APIException)
@@ -253,10 +256,10 @@ namespace FantasyPlayer.Spotify
             {
                 if (CurrentlyPlaying == null) return;
                 if (forward)
-                    _spotifyClient.Player.SkipNext();
+                    _spotifyClient.Player.SkipNext(new PlayerSkipNextRequest {DeviceId = DeviceId});
 
                 if (!forward)
-                    _spotifyClient.Player.SkipPrevious();
+                    _spotifyClient.Player.SkipPrevious(new PlayerSkipPreviousRequest {DeviceId = DeviceId});
             }
             catch (APIException)
             {
@@ -265,9 +268,15 @@ namespace FantasyPlayer.Spotify
 
         public async void SetVolume(int volume)
         {
-            if (volume > 100 || volume < 0) return;
-            var request = new PlayerVolumeRequest(volume);
-            await _spotifyClient.Player.SetVolume(request);
+            try
+            {
+                if (volume > 100 || volume < 0) return;
+                var request = new PlayerVolumeRequest(volume) {DeviceId = DeviceId};
+                await _spotifyClient.Player.SetVolume(request);
+            }
+            catch (APIException)
+            {
+            }
         }
 
         public void Dispose()

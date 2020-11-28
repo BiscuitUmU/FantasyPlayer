@@ -58,7 +58,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="SpotifyAPI.Web, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\packages\SpotifyAPI.Web.6.0.0-beta.12\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
+      <HintPath>..\packages\SpotifyAPI.Web.6.0.0\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
       <Private>True</Private>
     </Reference>
     
@@ -69,6 +69,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="CommandHelper.cs" />
         <Compile Include="Config\Configuration.cs" />
         <Compile Include="Config\SpotifySettings.cs" />
         <Compile Include="Constants.cs" />

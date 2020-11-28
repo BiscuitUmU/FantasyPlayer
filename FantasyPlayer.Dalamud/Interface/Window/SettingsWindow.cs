@@ -10,6 +10,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         public SettingsWindow(Plugin plugin)
         {
             _plugin = plugin;
+            
+            _plugin.CommandHelper.Commands.Add("config", (OptionType.Boolean, new string[] { "settings" }, "Toggles config display.", OnConfigCommand));
         }
 
 
@@ -24,12 +26,12 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private void MainWindow()
         {
             ImGui.SetNextWindowSize(new Vector2(401 * ImGui.GetIO().FontGlobalScale,
-                249 * ImGui.GetIO().FontGlobalScale));
+                349 * ImGui.GetIO().FontGlobalScale));
 
             if (ImGui.Begin("Fantasy Player Config", ref _plugin.Configuration.ConfigShown, ImGuiWindowFlags.NoResize))
             {
                 ImGui.PushStyleColor(ImGuiCol.Text,InterfaceUtils.DarkenColor);
-                ImGui.Text($"Type {Plugin.Command} help' to display chat commands!");
+                ImGui.Text($"Type '{Plugin.Command} help' to display chat commands!");
                 ImGui.PopStyleColor();
                 
                 if (ImGui.CollapsingHeader("Fantasy Player"))
@@ -40,7 +42,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 if (ImGui.CollapsingHeader("Spotify"))
                 {
+                    if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.SpotifySettings.CompactPlayer))
+                    {
+                        _plugin.Configuration.Save();
+                    }
+                    
+                    ImGui.Separator();
+                    
                     if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
+                    {
+                        _plugin.Configuration.Save();
+                    }
+                    
+                    if (ImGui.Checkbox("Player locked", ref _plugin.Configuration.SpotifySettings.PlayerLocked))
+                    {
+                        _plugin.Configuration.Save();
+                    }
+                    
+                    ImGui.Separator();
+
+                    if (ImGui.SliderFloat("Player alpha", ref _plugin.Configuration.SpotifySettings.Transparency, 0f, 1f))
                     {
                         _plugin.Configuration.Save();
                     }
@@ -80,6 +101,15 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 ImGui.End();
             }
+        }
+        
+        public void OnConfigCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            if (response == CallbackResponse.SetValue)
+                _plugin.Configuration.ConfigShown = boolValue;
+
+            if (response == CallbackResponse.ToggleValue)
+                _plugin.Configuration.ConfigShown = !_plugin.Configuration.ConfigShown;
         }
     }
 }

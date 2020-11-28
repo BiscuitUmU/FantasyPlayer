@@ -43,11 +43,11 @@
           <Private>True</Private>
         </Reference>
         <Reference Include="SpotifyAPI.Web, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\packages\SpotifyAPI.Web.6.0.0-beta.12\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
+          <HintPath>..\packages\SpotifyAPI.Web.6.0.0\lib\netstandard2.0\SpotifyAPI.Web.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="SpotifyAPI.Web.Auth, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\packages\SpotifyAPI.Web.Auth.6.0.0-beta.12\lib\netstandard2.0\SpotifyAPI.Web.Auth.dll</HintPath>
+          <HintPath>..\packages\SpotifyAPI.Web.Auth.6.0.0\lib\netstandard2.0\SpotifyAPI.Web.Auth.dll</HintPath>
           <Private>True</Private>
         </Reference>
         <Reference Include="Swan.Lite, Version=3.0.0.0, Culture=neutral, PublicKeyToken=30c707c872729fff">

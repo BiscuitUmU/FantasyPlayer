@@ -8,8 +8,13 @@ namespace FantasyPlayer.Dalamud.Config
         public Vector4 AccentColor = Interface.InterfaceUtils.SpotifyColor;
         
         public PKCETokenResponse TokenResponse;
+        
+        public float Transparency = 1f;
+        
         public bool SpotifyWindowShown = true;
         public bool AlbumShown = false;
+        public bool CompactPlayer = false;
+        public bool PlayerLocked = false;
         public bool DebugWindowOpen;
         public SpotifySettings()
         {

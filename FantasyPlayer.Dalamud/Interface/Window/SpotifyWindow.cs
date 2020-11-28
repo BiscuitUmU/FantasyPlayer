@@ -25,6 +25,9 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private readonly Vector2 _windowSizeWithAlbum = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
             149 * ImGui.GetIO().FontGlobalScale);
 
+        private readonly Vector2 _windowSizeCompact = new Vector2(179 * ImGui.GetIO().FontGlobalScale,
+            39 * ImGui.GetIO().FontGlobalScale);
+
         private readonly Vector2 _windowSizeWithoutAlbum = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
             89 * ImGui.GetIO().FontGlobalScale);
 
@@ -42,6 +45,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _plugin.SpotifyState.Start();
         }
 
+        //////////////// Delegates ////////////////
+
         private void OnPlayerStateUpdate(CurrentlyPlayingContext currentlyPlaying, FullTrack playbackItem)
         {
             if (playbackItem.Id != _lastId)
@@ -56,7 +61,25 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             _plugin.Configuration.SpotifySettings.TokenResponse = tokenResponse;
             _plugin.Configuration.Save();
+
+            var cmdHelper = _plugin.CommandHelper;
+
+            cmdHelper.Commands.Add("display",
+                (OptionType.Boolean, new string[] { }, "Toggle player display.", OnDisplayCommand));
+            cmdHelper.Commands.Add("shuffle",
+                (OptionType.Boolean, new string[] { }, "Toggle shuffle.", OnShuffleCommand));
+            cmdHelper.Commands.Add("next",
+                (OptionType.None, new string[] {"skip"}, "Skip to the next track.", OnNextCommand));
+            cmdHelper.Commands.Add("back",
+                (OptionType.None, new string[] {"previous"}, "Go back a track.", OnBackCommand));
+            cmdHelper.Commands.Add("pause",
+                (OptionType.None, new string[] {"stop"}, "Pause playback.", OnPauseCommand));
+            cmdHelper.Commands.Add("play", (OptionType.None, new string[] { }, "Continue playback.", OnPlayCommand));
+            cmdHelper.Commands.Add("volume",
+                (OptionType.Int, new string[] { }, "Set playback volume.", OnVolumeCommand));
         }
+
+        //////////////// Window Loop ////////////////
 
         public void WindowLoop()
         {
@@ -73,6 +96,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 MainWindow();
             }
         }
+
+        //////////////// Windows ////////////////
 
         private void DebugWindow()
         {
@@ -118,16 +143,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
         private void MainWindow()
         {
-            ImGui.SetNextWindowSize(_plugin.SpotifyState.DownloadAlbumArt
-                ? _windowSizeWithAlbum
+            ImGui.SetNextWindowSize(_plugin.Configuration.SpotifySettings.CompactPlayer
+                ? _windowSizeCompact
                 : _windowSizeWithoutAlbum);
 
-            if (!ImGui.Begin("Spotify Player", ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize)) return;
+            ImGui.SetNextWindowBgAlpha(_plugin.Configuration.SpotifySettings.Transparency);
+
+            var lockFlags = (_plugin.Configuration.SpotifySettings.PlayerLocked)
+                ? ImGuiWindowFlags.NoMove
+                : ImGuiWindowFlags.None;
+
+            if (!ImGui.Begin("Spotify Player",
+                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | lockFlags)) return;
 
             //////////////// Right click popup ////////////////
 
             if (ImGui.BeginPopupContextWindow())
             {
+                ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.SpotifySettings.CompactPlayer);
+                ImGui.Separator();
+                ImGui.MenuItem("Lock player", null, ref _plugin.Configuration.SpotifySettings.PlayerLocked);
                 ImGui.MenuItem("Show player", null, ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown);
                 ImGui.MenuItem("Show config", null, ref _plugin.Configuration.ConfigShown);
 
@@ -191,7 +226,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     ImGui.PushStyleColor(ImGuiCol.Text, _plugin.Configuration.SpotifySettings.AccentColor);
 
                 if (ImGui.Button(FontAwesomeIcon.Random.ToIconString()))
-                    _plugin.SpotifyState.ToggleShuffle();
+                    _plugin.SpotifyState.Shuffle(!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState);
 
                 if (playing.ShuffleState)
                     ImGui.PopStyleColor();
@@ -221,64 +256,65 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 ImGui.PopFont();
 
-                //////////////// Progress Bar ////////////////
-
-                ImGui.PushStyleColor(ImGuiCol.PlotHistogram, _plugin.Configuration.SpotifySettings.AccentColor);
-                ImGui.ProgressBar(percent / 100f, new Vector2(-1, 2f));
-                ImGui.PopStyleColor();
-
-                Vector2 imageSize = new Vector2(100 * ImGui.GetIO().FontGlobalScale,
-                    100 * ImGui.GetIO().FontGlobalScale);
-
-                //////////////// Album Art ////////////////
-
-                if (_plugin.SpotifyState.CurrentImage != null && _plugin.SpotifyState.DownloadAlbumArt != false)
+                if (!_plugin.Configuration.SpotifySettings.CompactPlayer)
                 {
-                    var fileName = $"{_plugin.SpotifyState.LastFullTrack.Album.Id}.png";
+                    //////////////// Progress Bar ////////////////
 
-                    if (File.Exists(SpotifyImage.GetFolderPath(fileName)))
+                    ImGui.PushStyleColor(ImGuiCol.PlotHistogram, _plugin.Configuration.SpotifySettings.AccentColor);
+                    ImGui.ProgressBar(percent / 100f, new Vector2(-1, 2f));
+                    ImGui.PopStyleColor();
+
+                    Vector2 imageSize = new Vector2(100 * ImGui.GetIO().FontGlobalScale,
+                        100 * ImGui.GetIO().FontGlobalScale);
+
+                    //////////////// Album Art ////////////////
+
+                    if (_plugin.SpotifyState.CurrentImage != null && _plugin.SpotifyState.DownloadAlbumArt != false)
                     {
-                        var texture = _uiBuilder.LoadImage(SpotifyImage.GetFolderPath(fileName));
+                        var fileName = $"{_plugin.SpotifyState.LastFullTrack.Album.Id}.png";
 
-                        if (texture != null && texture.ImGuiHandle != IntPtr.Zero)
+                        if (File.Exists(SpotifyImage.GetFolderPath(fileName)))
                         {
-                            ImGui.Image(texture.ImGuiHandle, imageSize);
+                            var texture = _uiBuilder.LoadImage(SpotifyImage.GetFolderPath(fileName));
+
+                            if (texture != null && texture.ImGuiHandle != IntPtr.Zero)
+                            {
+                                ImGui.Image(texture.ImGuiHandle, imageSize);
+                            }
                         }
                     }
+
+                    //////////////// Text ////////////////
+
+                    if (_plugin.SpotifyState.DownloadAlbumArt)
+                        ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPos().X + (imageSize.X + 6),
+                            ImGui.GetCursorPos().Y - (100 * ImGui.GetIO().FontGlobalScale) +
+                            ImGui.GetIO().FontGlobalScale));
+
+                    if (_plugin.SpotifyState.DownloadAlbumArt)
+                        ImGui.Text(track.Name);
+                    else
+                        InterfaceUtils.TextCentered(track.Name);
+
+                    ImGui.PushStyleColor(ImGuiCol.Text, InterfaceUtils.DarkenColor);
+
+                    if (_plugin.SpotifyState.DownloadAlbumArt)
+                        ImGui.SetCursorPos(new Vector2(
+                            ImGui.GetCursorPos().X + (100 * ImGui.GetIO().FontGlobalScale + 6),
+                            ImGui.GetCursorPos().Y));
+
+                    if (_plugin.SpotifyState.DownloadAlbumArt)
+                        ImGui.Text(artists.Remove(artists.Length - 2));
+                    else
+                    {
+                        ImGui.Spacing();
+                        InterfaceUtils.TextCentered(artists.Remove(artists.Length - 2));
+                    }
+
+                    ImGui.PopStyleColor();
                 }
 
-                //////////////// Text ////////////////
-
-                if (_plugin.SpotifyState.DownloadAlbumArt)
-                    ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPos().X + (imageSize.X + 6),
-                        ImGui.GetCursorPos().Y - (100 * ImGui.GetIO().FontGlobalScale) +
-                        ImGui.GetIO().FontGlobalScale));
-
-                if (_plugin.SpotifyState.DownloadAlbumArt)
-                    ImGui.Text(track.Name);
-                else
-                    InterfaceUtils.TextCentered(track.Name);
-
-                ImGui.PushStyleColor(ImGuiCol.Text, InterfaceUtils.DarkenColor);
-
-                if (_plugin.SpotifyState.DownloadAlbumArt)
-                    ImGui.SetCursorPos(new Vector2(
-                        ImGui.GetCursorPos().X + (100 * ImGui.GetIO().FontGlobalScale + 6),
-                        ImGui.GetCursorPos().Y));
-
-                if (_plugin.SpotifyState.DownloadAlbumArt)
-                    ImGui.Text(artists.Remove(artists.Length - 2));
-                else
-                {
-                    ImGui.Spacing();
-                    InterfaceUtils.TextCentered(artists.Remove(artists.Length - 2));
-                }
-
-                ImGui.PopStyleColor();
-
-                ImGui.PopStyleColor();
-                ImGui.PopStyleColor();
-                ImGui.PopStyleColor();
+                ImGui.PopStyleColor(3);
             }
 
             ImGui.End();
@@ -312,6 +348,77 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             }
         }
 
+        //////////////// Commands ////////////////
+
+        public void OnVolumeCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            _plugin.DisplayMessage($"Set volume to: {intValue}");
+            _plugin.SpotifyState.SetVolume(intValue);
+        }
+
+        public void OnDisplayCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            if (response == CallbackResponse.SetValue)
+                _plugin.Configuration.SpotifySettings.SpotifyWindowShown = boolValue;
+
+            if (response == CallbackResponse.ToggleValue)
+                _plugin.Configuration.SpotifySettings.SpotifyWindowShown =
+                    !_plugin.Configuration.SpotifySettings.SpotifyWindowShown;
+        }
+
+        public void OnShuffleCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            if (response == CallbackResponse.SetValue)
+            {
+                if (boolValue)
+                    _plugin.DisplayMessage("Turned on shuffle.");
+                
+                if (!boolValue)
+                    _plugin.DisplayMessage("Turned off shuffle.");
+                
+                _plugin.SpotifyState.Shuffle(boolValue);
+            }
+
+            if (response == CallbackResponse.ToggleValue)
+            {
+                if (!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState)
+                    _plugin.DisplayMessage("Turned on shuffle.");
+                
+                if (_plugin.SpotifyState.CurrentlyPlaying.ShuffleState)
+                    _plugin.DisplayMessage("Turned off shuffle.");
+                
+                _plugin.SpotifyState.Shuffle(!_plugin.SpotifyState.CurrentlyPlaying.ShuffleState);
+            }
+        }
+
+        public void OnNextCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            _plugin.DisplayMessage("Skipping to next track.");
+            _plugin.SpotifyState.Skip(true);
+        }
+
+        public void OnBackCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            _plugin.DisplayMessage("Going back a track.");
+            _plugin.SpotifyState.Skip(false);
+        }
+
+        public void OnPlayCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            string displayInfo = null;
+            if (_plugin.SpotifyState.LastFullTrack != null)
+                displayInfo = _plugin.SpotifyState.LastFullTrack.Name;
+            _plugin.DisplayMessage($"Playing '{displayInfo}'...");
+            _plugin.SpotifyState.PauseOrPlay(true);
+        }
+
+        public void OnPauseCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            _plugin.DisplayMessage("Paused playback.");
+            _plugin.SpotifyState.PauseOrPlay(false);
+        }
+
+        //////////////// Dispose ////////////////
         public void Dispose()
         {
             _plugin.SpotifyState.OnLoggedIn -= OnLoggedIn;
