@@ -70,13 +70,20 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (!_plugin.SpotifyState.IsPremiumUser)
             {
-                if (!_plugin.Configuration.SpotifySettings.LimitedAccess) //Do a check to not spam the user, I don't want to force it down their throats. (fuck marketing)
+                if (!_plugin.Configuration.SpotifySettings.LimitedAccess
+                ) //Do a check to not spam the user, I don't want to force it down their throats. (fuck marketing)
                     _plugin.PluginInterface.Framework.Gui.Chat.PrintError(
                         "Uh-oh, it looks like you're not premium on Spotify. Some features in Fantasy Player have been disabled.");
-                
+
                 _plugin.Configuration.SpotifySettings.LimitedAccess = true;
+                
+                //Change configs
+                if (_plugin.Configuration.SpotifySettings.CompactPlayer)
+                    _plugin.Configuration.SpotifySettings.CompactPlayer = false;
+                if (!_plugin.Configuration.SpotifySettings.NoButtons)
+                    _plugin.Configuration.SpotifySettings.NoButtons = true;
             }
-            
+
             _plugin.Configuration.Save();
 
             if (!_plugin.SpotifyState.IsPremiumUser)
@@ -175,7 +182,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             if (_plugin.Configuration.SpotifySettings.NoButtons)
                 ImGui.SetNextWindowSize(_windowSizeNoButtons);
 
-            if (!_plugin.Configuration.SpotifySettings.LimitedAccess
+            if (_plugin.Configuration.SpotifySettings.LimitedAccess
             ) //We should just remove the buttons because the user can't use them anyway :(
                 ImGui.SetNextWindowSize(_windowSizeNoButtons);
 
@@ -194,8 +201,12 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (ImGui.BeginPopupContextWindow())
             {
-                ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.SpotifySettings.CompactPlayer);
-                ImGui.Separator();
+                if (!_plugin.Configuration.SpotifySettings.LimitedAccess)
+                {
+                    ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.SpotifySettings.CompactPlayer);
+                    ImGui.Separator();
+                }
+
                 ImGui.MenuItem("Lock player", null, ref _plugin.Configuration.SpotifySettings.PlayerLocked);
                 ImGui.MenuItem("Show player", null, ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown);
                 ImGui.MenuItem("Show config", null, ref _plugin.Configuration.ConfigShown);
