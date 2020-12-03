@@ -8,7 +8,6 @@
             $"&release_type={VersionInfo.Type.ToLower()}&release_version={VersionInfo.VersionNum.Major}.{VersionInfo.VersionNum.Minor}.{VersionInfo.VersionNum.Build}";
 
         public const string HelixEndpointConfig = "/config";
-        public const string HelixEndpointDownloadNew = "/download/new";
 
         public const string SpotifyLoginUri = "http://localhost:2984/callback";
         public const string SpotifyClientId = "543b99137134401580648c4ea2a55b08";

@@ -12,8 +12,6 @@ namespace FantasyPlayer.Dalamud.Config
 
         public bool DisplayChatMessages;
 
-        public string LastDownloadSubmit;
-
         [NonSerialized]
         public bool ConfigShown;
         
