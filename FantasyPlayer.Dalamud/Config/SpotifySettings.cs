@@ -18,6 +18,8 @@ namespace FantasyPlayer.Dalamud.Config
         public bool DisableInput = false;
         public bool PlayerLocked = false;
         public bool DebugWindowOpen;
+
+        public bool LimitedAccess;
         public SpotifySettings()
         {
             

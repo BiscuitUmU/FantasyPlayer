@@ -4,6 +4,7 @@ using System.Linq;
 using System.Numerics;
 using System.Threading;
 using Dalamud.Interface;
+using FantasyPlayer.Dalamud.Manager;
 using FantasyPlayer.Spotify;
 using ImGuiNET;
 using SpotifyAPI.Web;
@@ -45,6 +46,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (_plugin.Configuration.SpotifySettings.TokenResponse == null) return;
             _plugin.SpotifyState.TokenResponse = _plugin.Configuration.SpotifySettings.TokenResponse;
+            _plugin.SpotifyState.RequestToken();
             _plugin.SpotifyState.Start();
         }
 
@@ -61,24 +63,41 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private void OnLoggedIn(PrivateUser privateUser, PKCETokenResponse tokenResponse)
         {
             _loggedIn = true;
-
             _plugin.Configuration.SpotifySettings.TokenResponse = tokenResponse;
+
+            if (_plugin.SpotifyState.IsPremiumUser)
+                _plugin.Configuration.SpotifySettings.LimitedAccess = false;
+
+            if (!_plugin.SpotifyState.IsPremiumUser)
+            {
+                if (!_plugin.Configuration.SpotifySettings.LimitedAccess) //Do a check to not spam the user, I don't want to force it down their throats. (fuck marketing)
+                    _plugin.PluginInterface.Framework.Gui.Chat.PrintError(
+                        "Uh-oh, it looks like you're not premium on Spotify. Some features in Fantasy Player have been disabled.");
+                
+                _plugin.Configuration.SpotifySettings.LimitedAccess = true;
+            }
+            
             _plugin.Configuration.Save();
 
-            var cmdHelper = _plugin.CommandHelper;
+            if (!_plugin.SpotifyState.IsPremiumUser)
+                return;
 
-            cmdHelper.Commands.Add("display",
+
+            var cmdManager = _plugin.CommandManager;
+
+            cmdManager.Commands.Add("display",
                 (OptionType.Boolean, new string[] { }, "Toggle player display.", OnDisplayCommand));
-            cmdHelper.Commands.Add("shuffle",
+            cmdManager.Commands.Add("shuffle",
                 (OptionType.Boolean, new string[] { }, "Toggle shuffle.", OnShuffleCommand));
-            cmdHelper.Commands.Add("next",
+            cmdManager.Commands.Add("next",
                 (OptionType.None, new string[] {"skip"}, "Skip to the next track.", OnNextCommand));
-            cmdHelper.Commands.Add("back",
+            cmdManager.Commands.Add("back",
                 (OptionType.None, new string[] {"previous"}, "Go back a track.", OnBackCommand));
-            cmdHelper.Commands.Add("pause",
+            cmdManager.Commands.Add("pause",
                 (OptionType.None, new string[] {"stop"}, "Pause playback.", OnPauseCommand));
-            cmdHelper.Commands.Add("play", (OptionType.None, new string[] { }, "Continue playback.", OnPlayCommand));
-            cmdHelper.Commands.Add("volume",
+            cmdManager.Commands.Add("play",
+                (OptionType.None, new string[] { }, "Continue playback.", OnPlayCommand));
+            cmdManager.Commands.Add("volume",
                 (OptionType.Int, new string[] { }, "Set playback volume.", OnVolumeCommand));
         }
 
@@ -147,13 +166,17 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private void MainWindow()
         {
             ImGui.SetNextWindowBgAlpha(_plugin.Configuration.SpotifySettings.Transparency);
-            
+
             ImGui.SetNextWindowSize(_windowSizeWithoutAlbum);
-            
+
             if (_plugin.Configuration.SpotifySettings.CompactPlayer)
                 ImGui.SetNextWindowSize(_windowSizeCompact);
-            
+
             if (_plugin.Configuration.SpotifySettings.NoButtons)
+                ImGui.SetNextWindowSize(_windowSizeNoButtons);
+
+            if (!_plugin.Configuration.SpotifySettings.LimitedAccess
+            ) //We should just remove the buttons because the user can't use them anyway :(
                 ImGui.SetNextWindowSize(_windowSizeNoButtons);
 
             var lockFlags = (_plugin.Configuration.SpotifySettings.PlayerLocked)

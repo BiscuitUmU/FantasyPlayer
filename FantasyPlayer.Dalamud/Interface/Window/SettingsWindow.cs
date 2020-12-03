@@ -1,5 +1,6 @@
 ﻿using ImGuiNET;
 using System.Numerics;
+using FantasyPlayer.Dalamud.Manager;
 
 namespace FantasyPlayer.Dalamud.Interface.Window
 {
@@ -11,7 +12,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         {
             _plugin = plugin;
             
-            _plugin.CommandHelper.Commands.Add("config", (OptionType.Boolean, new string[] { "settings" }, "Toggles config display.", OnConfigCommand));
+            _plugin.CommandManager.Commands.Add("config", (OptionType.Boolean, new string[] { "settings" }, "Toggles config display.", OnConfigCommand));
         }
 
 
@@ -42,22 +43,33 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 if (ImGui.CollapsingHeader("Spotify"))
                 {
-                    if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.SpotifySettings.CompactPlayer))
+                    if (_plugin.Configuration.SpotifySettings.LimitedAccess)
                     {
-                        if (_plugin.Configuration.SpotifySettings.NoButtons)
-                            _plugin.Configuration.SpotifySettings.NoButtons = false;
-                        _plugin.Configuration.Save();
+                        ImGui.PushStyleColor(ImGuiCol.Text, InterfaceUtils.DarkenColor);
+                        ImGui.Text("You're not premium on Spotify. Some settings have been hidden.");
+                        ImGui.PopStyleColor();
                     }
 
-                    if (ImGui.Checkbox("Hide buttons", ref _plugin.Configuration.SpotifySettings.NoButtons))
+                    if (!_plugin.Configuration.SpotifySettings.LimitedAccess)
                     {
-                        if (_plugin.Configuration.SpotifySettings.CompactPlayer)
-                            _plugin.Configuration.SpotifySettings.CompactPlayer = false;
-                        _plugin.Configuration.Save();
-                    }
 
-                    ImGui.Separator();
+                        if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.SpotifySettings.CompactPlayer))
+                        {
+                            if (_plugin.Configuration.SpotifySettings.NoButtons)
+                                _plugin.Configuration.SpotifySettings.NoButtons = false;
+                            _plugin.Configuration.Save();
+                        }
+
+                        if (ImGui.Checkbox("Hide buttons", ref _plugin.Configuration.SpotifySettings.NoButtons))
+                        {
+                            if (_plugin.Configuration.SpotifySettings.CompactPlayer)
+                                _plugin.Configuration.SpotifySettings.CompactPlayer = false;
+                            _plugin.Configuration.Save();
+                        }
+                    }
                     
+                    ImGui.Separator();
+
                     if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
                     {
                         _plugin.Configuration.Save();

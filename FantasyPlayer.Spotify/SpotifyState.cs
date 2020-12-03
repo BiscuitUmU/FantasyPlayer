@@ -12,6 +12,7 @@ namespace FantasyPlayer.Spotify
         //TODO: put this in costs!
         private readonly Uri _loginUrl;
         private readonly string _clientId;
+        private readonly int _playerRefreshTime;
         private readonly EmbedIOAuthServer _server;
 
         private SpotifyClient _spotifyClient;
@@ -19,6 +20,7 @@ namespace FantasyPlayer.Spotify
 
         public bool DownloadAlbumArt;
         public bool IsLoggedIn;
+        public bool IsPremiumUser;
 
 
         public string DeviceId;
@@ -54,10 +56,11 @@ namespace FantasyPlayer.Spotify
         private string _verifier;
         private LoginRequest _loginRequest;
 
-        public SpotifyState(string loginUri, string clientId, int port)
+        public SpotifyState(string loginUri, string clientId, int port, int playerRefreshTime)
         {
             _loginUrl = new Uri(loginUri);
             _clientId = clientId;
+            _playerRefreshTime = playerRefreshTime;
             _server = new EmbedIOAuthServer(_loginUrl, port);
         }
 
@@ -76,6 +79,17 @@ namespace FantasyPlayer.Spotify
             };
         }
 
+        public async Task RequestToken()
+        {
+            if (TokenResponse == null) 
+                return;
+            
+            var newResponse = await new OAuthClient().RequestToken(
+                new PKCETokenRefreshRequest(_clientId, TokenResponse.RefreshToken)
+            );
+            TokenResponse = newResponse;
+        }
+
         public async Task Start()
         {
             _authenticator = new PKCEAuthenticator(_clientId!, TokenResponse);
@@ -90,6 +104,9 @@ namespace FantasyPlayer.Spotify
 
             User = user;
             UserPlaylists = playlists;
+            
+            if (user.Product == "premium")
+                IsPremiumUser = true;
 
             OnLoggedIn?.Invoke(User, TokenResponse);
             IsLoggedIn = true;
@@ -102,7 +119,7 @@ namespace FantasyPlayer.Spotify
         {
             while (true)
             {
-                var delayTask = Task.Delay(3000); //Run timer every 3 seconds
+                var delayTask = Task.Delay(_playerRefreshTime); //Run timer every _playerRefreshTime
                 await CheckPlayerState();
                 await delayTask;
             }

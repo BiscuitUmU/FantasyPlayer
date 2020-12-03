@@ -4,7 +4,9 @@ using Dalamud.Game.Command;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Config;
 using FantasyPlayer.Dalamud.Interface;
+using FantasyPlayer.Dalamud.Manager;
 using FantasyPlayer.Spotify;
+using CommandManager = FantasyPlayer.Dalamud.Manager.CommandManager;
 
 namespace FantasyPlayer.Dalamud
 {
@@ -17,19 +19,23 @@ namespace FantasyPlayer.Dalamud
         public DalamudPluginInterface PluginInterface { get; private set; }
         public Configuration Configuration { get; set; }
         public SpotifyState SpotifyState { get; set; }
-        public CommandHelper CommandHelper { get; set; }
+        public CommandManager CommandManager { get; set; }
+        public RemoteManager RemoteConfigManager { get; set; }
 
         public string Version { get; private set; }
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
-            Version =
-                $"FP{VersionInfo.VersionNum}{VersionInfo.Type}_SP{Spotify.VersionInfo.VersionNum}{Spotify.VersionInfo.Type}";
-            
             PluginInterface = pluginInterface;
 
             Configuration = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Configuration.Initialize(pluginInterface);
+            
+            RemoteConfigManager = new RemoteManager(this);
+            var config = RemoteConfigManager.Config;
+
+            Version =
+                $"FP{VersionInfo.VersionNum}{VersionInfo.Type}_SP{Spotify.VersionInfo.VersionNum}{Spotify.VersionInfo.Type}_HX{config.ApiVersion}";
 
             PluginInterface.CommandManager.AddHandler(Command, new CommandInfo(OnCommand)
             {
@@ -37,13 +43,13 @@ namespace FantasyPlayer.Dalamud
             });
 
             //Setup player
-            SpotifyState = new SpotifyState(Constants.SpotifyLoginUri, Constants.SpotifyClientId,
-                Constants.SpotifyLoginPort);
+            SpotifyState = new SpotifyState(config.SpotifyLoginUri, config.SpotifyClientId,
+                config.SpotifyLoginPort, config.SpotifyPlayerRefreshTime);
 
             if (Configuration.SpotifySettings.AlbumShown == false)
                 SpotifyState.DownloadAlbumArt = false;
             
-            CommandHelper = new CommandHelper(pluginInterface, this);
+            CommandManager = new CommandManager(pluginInterface, this);
 
             InterfaceController = new InterfaceController(this);
 
@@ -53,7 +59,7 @@ namespace FantasyPlayer.Dalamud
 
         private void OnCommand(string command, string arguments)
         {
-            CommandHelper.ParseCommand(arguments);
+            CommandManager.ParseCommand(arguments);
         }
 
         public void DisplayMessage(string message)

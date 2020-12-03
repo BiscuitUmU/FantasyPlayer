@@ -69,7 +69,6 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="CommandHelper.cs" />
         <Compile Include="Config\Configuration.cs" />
         <Compile Include="Config\SpotifySettings.cs" />
         <Compile Include="Constants.cs" />
@@ -77,8 +76,11 @@
         <Compile Include="Interface\InterfaceUtils.cs" />
         <Compile Include="Interface\Window\SettingsWindow.cs" />
         <Compile Include="Interface\Window\SpotifyWindow.cs" />
+        <Compile Include="Manager\CommandManager.cs" />
+        <Compile Include="Manager\RemoteManager.cs" />
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="RemoteModel\Config.cs" />
         <Compile Include="VersionInfo.cs" />
     </ItemGroup>
     <ItemGroup>

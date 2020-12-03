@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Plugin;
 
-namespace FantasyPlayer.Dalamud
+namespace FantasyPlayer.Dalamud.Manager
 {
     public enum OptionType
     {
@@ -19,7 +19,7 @@ namespace FantasyPlayer.Dalamud
         ToggleValue
     }
 
-    public class CommandHelper
+    public class CommandManager
     {
         private DalamudPluginInterface _pluginInterface;
         private Plugin _plugin;
@@ -33,7 +33,7 @@ namespace FantasyPlayer.Dalamud
         
         public string[] FriendlyOptions = {"none", "toggle", "number"};
 
-        public CommandHelper(DalamudPluginInterface pluginInterface, Plugin plugin)
+        public CommandManager(DalamudPluginInterface pluginInterface, Plugin plugin)
         {
             _pluginInterface = pluginInterface;
             _plugin = plugin;
