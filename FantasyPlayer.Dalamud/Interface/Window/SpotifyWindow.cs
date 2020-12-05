@@ -17,6 +17,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private readonly UiBuilder _uiBuilder;
 
         private Thread _loginThread;
+        private Thread _startThread;
 
         private float _progressDelta;
         private int _progressMs;
@@ -47,7 +48,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             if (_plugin.Configuration.SpotifySettings.TokenResponse == null) return;
             _plugin.SpotifyState.TokenResponse = _plugin.Configuration.SpotifySettings.TokenResponse;
             _plugin.SpotifyState.RequestToken();
-            _plugin.SpotifyState.Start();
+            _startThread = new Thread(_plugin.SpotifyState.Start);
+            _startThread.Start();
         }
 
         //////////////// Delegates ////////////////
@@ -76,7 +78,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                         "Uh-oh, it looks like you're not premium on Spotify. Some features in Fantasy Player have been disabled.");
 
                 _plugin.Configuration.SpotifySettings.LimitedAccess = true;
-                
+
                 //Change configs
                 if (_plugin.Configuration.SpotifySettings.CompactPlayer)
                     _plugin.Configuration.SpotifySettings.CompactPlayer = false;
@@ -469,6 +471,8 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         //////////////// Dispose ////////////////
         public void Dispose()
         {
+            _startThread?.Abort();
+            _loginThread?.Abort();
             _plugin.SpotifyState.OnLoggedIn -= OnLoggedIn;
             _plugin.SpotifyState.OnPlayerStateUpdate -= OnPlayerStateUpdate;
         }

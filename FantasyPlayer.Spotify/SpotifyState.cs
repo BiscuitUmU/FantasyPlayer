@@ -81,16 +81,17 @@ namespace FantasyPlayer.Spotify
 
         public async Task RequestToken()
         {
-            if (TokenResponse == null) 
+            if (TokenResponse == null)
                 return;
-            
+
             var newResponse = await new OAuthClient().RequestToken(
                 new PKCETokenRefreshRequest(_clientId, TokenResponse.RefreshToken)
             );
+            
             TokenResponse = newResponse;
         }
 
-        public async Task Start()
+        public async void Start()
         {
             _authenticator = new PKCEAuthenticator(_clientId!, TokenResponse);
 
@@ -100,11 +101,12 @@ namespace FantasyPlayer.Spotify
             _spotifyClient = new SpotifyClient(config);
 
             var user = await _spotifyClient.UserProfile.Current();
-            var playlists = await _spotifyClient.Playlists.GetUsers(user.Id);
+            //var playlists = await _spotifyClient.Playlists.GetUsers(user.Id);
+
 
             User = user;
-            UserPlaylists = playlists;
-            
+            //UserPlaylists = playlists;
+
             if (user.Product == "premium")
                 IsPremiumUser = true;
 
@@ -201,7 +203,7 @@ namespace FantasyPlayer.Spotify
                     new PKCETokenRequest(_clientId!, response.Code, _server.BaseUri, _verifier)
                 );
 
-                await Start();
+                Start();
             };
 
             CreateLoginRequest();
