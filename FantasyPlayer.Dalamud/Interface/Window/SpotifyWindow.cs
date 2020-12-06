@@ -220,7 +220,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (_plugin.SpotifyState.CurrentlyPlaying == null)
             {
-                InterfaceUtils.TextCentered("Nothing is currently playing on Spotify.");
+                InterfaceUtils.TextCentered("Nothing is playing on Spotify.");
                 return;
             }
 

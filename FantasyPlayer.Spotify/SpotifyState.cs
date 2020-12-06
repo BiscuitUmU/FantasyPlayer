@@ -93,28 +93,35 @@ namespace FantasyPlayer.Spotify
 
         public async void Start()
         {
-            _authenticator = new PKCEAuthenticator(_clientId!, TokenResponse);
+            try
+            {
+                _authenticator = new PKCEAuthenticator(_clientId!, TokenResponse);
 
-            var config = SpotifyClientConfig.CreateDefault()
-                .WithAuthenticator(_authenticator);
+                var config = SpotifyClientConfig.CreateDefault()
+                    .WithAuthenticator(_authenticator);
 
-            _spotifyClient = new SpotifyClient(config);
+                _spotifyClient = new SpotifyClient(config);
 
-            var user = await _spotifyClient.UserProfile.Current();
-            //var playlists = await _spotifyClient.Playlists.GetUsers(user.Id);
+                var user = await _spotifyClient.UserProfile.Current();
+                //var playlists = await _spotifyClient.Playlists.GetUsers(user.Id);
 
 
-            User = user;
-            //UserPlaylists = playlists;
+                User = user;
+                //UserPlaylists = playlists;
 
-            if (user.Product == "premium")
-                IsPremiumUser = true;
+                if (user.Product == "premium")
+                    IsPremiumUser = true;
 
-            OnLoggedIn?.Invoke(User, TokenResponse);
-            IsLoggedIn = true;
+                OnLoggedIn?.Invoke(User, TokenResponse);
+                IsLoggedIn = true;
 
-            _stateThread = new Thread(StateUpdateTimer);
-            _stateThread.Start();
+                _stateThread = new Thread(StateUpdateTimer);
+                _stateThread.Start();
+            }
+            catch (Exception e)
+            {
+                //We will just ignore for now, this should be handled better though
+            }
         }
 
         private async void StateUpdateTimer()
