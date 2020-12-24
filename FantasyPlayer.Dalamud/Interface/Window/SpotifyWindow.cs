@@ -50,6 +50,11 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _plugin.SpotifyState.RequestToken();
             _startThread = new Thread(_plugin.SpotifyState.Start);
             _startThread.Start();
+            
+            var cmdManager = _plugin.CommandManager;
+
+            cmdManager.Commands.Add("display",
+                (OptionType.Boolean, new string[] { }, "Toggle player display.", OnDisplayCommand));
         }
 
         //////////////// Delegates ////////////////
@@ -93,9 +98,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
 
             var cmdManager = _plugin.CommandManager;
-
-            cmdManager.Commands.Add("display",
-                (OptionType.Boolean, new string[] { }, "Toggle player display.", OnDisplayCommand));
+            
             cmdManager.Commands.Add("shuffle",
                 (OptionType.Boolean, new string[] { }, "Toggle shuffle.", OnShuffleCommand));
             cmdManager.Commands.Add("next",
