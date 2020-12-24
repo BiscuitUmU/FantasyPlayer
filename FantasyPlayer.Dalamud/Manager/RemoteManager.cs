@@ -1,5 +1,4 @@
 ﻿using System;
-using Dalamud.Plugin;
 using Newtonsoft.Json;
 
 namespace FantasyPlayer.Dalamud.Manager

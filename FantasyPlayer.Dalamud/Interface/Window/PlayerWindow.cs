@@ -1,10 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Linq;
+﻿using System.Linq;
 using System.Numerics;
-using System.Threading;
 using Dalamud.Interface;
-using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Manager;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;

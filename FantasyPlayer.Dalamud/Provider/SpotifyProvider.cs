@@ -1,8 +1,5 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
-using Dalamud.Plugin;
-using FantasyPlayer.Dalamud.Manager;
 using FantasyPlayer.Dalamud.Provider.Common;
 using FantasyPlayer.Spotify;
 using SpotifyAPI.Web;

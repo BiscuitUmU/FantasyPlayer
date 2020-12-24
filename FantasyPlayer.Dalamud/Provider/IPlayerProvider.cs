@@ -1,5 +1,4 @@
-﻿using FantasyPlayer.Dalamud.Manager;
-using FantasyPlayer.Dalamud.Provider.Common;
+﻿using FantasyPlayer.Dalamud.Provider.Common;
 
 namespace FantasyPlayer.Dalamud.Provider
 {

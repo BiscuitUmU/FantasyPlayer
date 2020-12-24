@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using SpotifyAPI.Web;
+﻿using SpotifyAPI.Web;
 
 namespace FantasyPlayer.Dalamud.Config
 {

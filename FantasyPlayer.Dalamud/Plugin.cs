@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Reflection;
 using Dalamud.Game.Command;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Config;
 using FantasyPlayer.Dalamud.Interface;
 using FantasyPlayer.Dalamud.Manager;
-using FantasyPlayer.Spotify;
 using CommandManager = FantasyPlayer.Dalamud.Manager.CommandManager;
 
 namespace FantasyPlayer.Dalamud

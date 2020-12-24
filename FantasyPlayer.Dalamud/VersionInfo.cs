@@ -1,5 +1,4 @@
 ﻿using System;
-using FantasyPlayer.Spotify;
 
 namespace FantasyPlayer.Dalamud
 {
