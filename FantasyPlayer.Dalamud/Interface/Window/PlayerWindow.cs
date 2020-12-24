@@ -85,17 +85,19 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 !_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn)
                 LoginWindow(_playerManager.CurrentPlayerProvider);
 
-            if (_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn)
-                MainWindow(_playerManager.CurrentPlayerProvider.PlayerState, _playerManager.CurrentPlayerProvider);
-
             if (_playerManager.CurrentPlayerProvider != null && _plugin.Configuration.PlayerSettings.DebugWindowOpen)
                 DebugWindow(_playerManager.CurrentPlayerProvider.PlayerState);
+            
+            if (_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn &&
+                _plugin.Configuration.PlayerSettings.PlayerWindowShown)
+            {
+                CheckProvider(_playerManager.CurrentPlayerProvider);
+                MainWindow(_playerManager.CurrentPlayerProvider.PlayerState, _playerManager.CurrentPlayerProvider);
+            }
         }
 
         private void MainWindow(PlayerStateStruct playerState, IPlayerProvider currentProvider)
         {
-            CheckProvider(currentProvider);
-            
             ImGui.SetNextWindowBgAlpha(_plugin.Configuration.PlayerSettings.Transparency);
             ImGui.SetNextWindowSize(_windowSizeWithoutAlbum);
 

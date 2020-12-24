@@ -72,7 +72,6 @@ namespace FantasyPlayer.Dalamud.Provider
 
         private void OnLoggedIn(PrivateUser privateUser, PKCETokenResponse tokenResponse)
         {
-            PluginLog.Log("Logged in");
             var playerStateStruct = PlayerState;
             playerStateStruct.IsLoggedIn = true;
             PlayerState = playerStateStruct;
