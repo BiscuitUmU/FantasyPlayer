@@ -18,7 +18,8 @@ namespace FantasyPlayer.Dalamud
         private InterfaceController InterfaceController { get; set; }
         public DalamudPluginInterface PluginInterface { get; private set; }
         public Configuration Configuration { get; set; }
-        public SpotifyState SpotifyState { get; set; }
+
+        public PlayerManager PlayerManager { get; set; }
         public CommandManager CommandManager { get; set; }
         public RemoteManager RemoteConfigManager { get; set; }
 
@@ -43,12 +44,8 @@ namespace FantasyPlayer.Dalamud
             });
 
             //Setup player
-            SpotifyState = new SpotifyState(config.SpotifyLoginUri, config.SpotifyClientId,
-                config.SpotifyLoginPort, config.SpotifyPlayerRefreshTime);
+            PlayerManager = new PlayerManager(this);
 
-            if (Configuration.SpotifySettings.AlbumShown == false)
-                SpotifyState.DownloadAlbumArt = false;
-            
             CommandManager = new CommandManager(pluginInterface, this);
 
             InterfaceController = new InterfaceController(this);
@@ -82,7 +79,7 @@ namespace FantasyPlayer.Dalamud
             PluginInterface.UiBuilder.OnOpenConfigUi -= OpenConfig;
 
             InterfaceController.Dispose();
-            SpotifyState.Dispose();
+            PlayerManager.Dispose();
         }
     }
 }

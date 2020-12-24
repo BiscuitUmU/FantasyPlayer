@@ -8,6 +8,7 @@ namespace FantasyPlayer.Dalamud.Config
     {
         public int Version { get; set; } = 0;
 
+        public PlayerSettings PlayerSettings { get; set; } = new PlayerSettings();
         public SpotifySettings SpotifySettings { get; set; } = new SpotifySettings();
 
         public bool DisplayChatMessages;

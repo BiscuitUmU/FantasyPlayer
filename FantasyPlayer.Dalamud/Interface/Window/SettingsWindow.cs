@@ -41,7 +41,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                         _plugin.Configuration.Save();
                 }
 
-                if (ImGui.CollapsingHeader("Spotify"))
+                if (ImGui.CollapsingHeader("Player Settings"))
                 {
                     if (_plugin.Configuration.SpotifySettings.LimitedAccess)
                     {
@@ -53,48 +53,48 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     if (!_plugin.Configuration.SpotifySettings.LimitedAccess)
                     {
 
-                        if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.SpotifySettings.CompactPlayer))
+                        if (ImGui.Checkbox("Compact mode", ref _plugin.Configuration.PlayerSettings.CompactPlayer))
                         {
-                            if (_plugin.Configuration.SpotifySettings.NoButtons)
-                                _plugin.Configuration.SpotifySettings.NoButtons = false;
+                            if (_plugin.Configuration.PlayerSettings.NoButtons)
+                                _plugin.Configuration.PlayerSettings.NoButtons = false;
                             _plugin.Configuration.Save();
                         }
 
-                        if (ImGui.Checkbox("Hide buttons", ref _plugin.Configuration.SpotifySettings.NoButtons))
+                        if (ImGui.Checkbox("Hide buttons", ref _plugin.Configuration.PlayerSettings.NoButtons))
                         {
-                            if (_plugin.Configuration.SpotifySettings.CompactPlayer)
-                                _plugin.Configuration.SpotifySettings.CompactPlayer = false;
+                            if (_plugin.Configuration.PlayerSettings.CompactPlayer)
+                                _plugin.Configuration.PlayerSettings.CompactPlayer = false;
                             _plugin.Configuration.Save();
                         }
                     }
                     
                     ImGui.Separator();
 
-                    if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.SpotifySettings.SpotifyWindowShown))
+                    if (ImGui.Checkbox("Player shown", ref _plugin.Configuration.PlayerSettings.PlayerWindowShown))
                     {
                         _plugin.Configuration.Save();
                     }
                     
-                    if (ImGui.Checkbox("Player locked", ref _plugin.Configuration.SpotifySettings.PlayerLocked))
+                    if (ImGui.Checkbox("Player locked", ref _plugin.Configuration.PlayerSettings.PlayerLocked))
                     {
                         _plugin.Configuration.Save();
                     }
                     
                     ImGui.Separator();
                     
-                    if (ImGui.Checkbox("Disable input (Click through)", ref _plugin.Configuration.SpotifySettings.DisableInput))
+                    if (ImGui.Checkbox("Disable input (Click through)", ref _plugin.Configuration.PlayerSettings.DisableInput))
                     {
                         _plugin.Configuration.Save();
                     }
                     
                     ImGui.Separator();
 
-                    if (ImGui.SliderFloat("Player alpha", ref _plugin.Configuration.SpotifySettings.Transparency, 0f, 1f))
+                    if (ImGui.SliderFloat("Player alpha", ref _plugin.Configuration.PlayerSettings.Transparency, 0f, 1f))
                     {
                         _plugin.Configuration.Save();
                     }
 
-                    if (ImGui.ColorEdit4("Player color", ref _plugin.Configuration.SpotifySettings.AccentColor))
+                    if (ImGui.ColorEdit4("Player color", ref _plugin.Configuration.PlayerSettings.AccentColor))
                     {
                         _plugin.Configuration.Save();
                     }
@@ -102,7 +102,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     ImGui.SameLine();
                     if (ImGui.Button("Revert"))
                     {
-                        _plugin.Configuration.SpotifySettings.AccentColor = InterfaceUtils.SpotifyColor;
+                        _plugin.Configuration.PlayerSettings.AccentColor = InterfaceUtils.FantasyPlayerColor;
                         _plugin.Configuration.Save();
                     }
                     
@@ -115,7 +115,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     //     _plugin.Configuration.Save();
                     // }
 
-                    if (ImGui.Checkbox("Show debug window", ref _plugin.Configuration.SpotifySettings.DebugWindowOpen))
+                    if (ImGui.Checkbox("Show debug window", ref _plugin.Configuration.PlayerSettings.DebugWindowOpen))
                     {
                         _plugin.Configuration.Save();
                     }
