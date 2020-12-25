@@ -1,12 +1,11 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Create FantasyPlayer Release
+name: Create FantasyPlayer Testing Release
 
-# Controls when the action will run. Triggers the workflow on tag creation
+# Controls when the action will run. Triggers the workflow on push
 on:
   push:
-    tags:
-      - '*'
+    branches: 'testing'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -37,7 +36,6 @@ jobs:
       - name: Build
         run: msbuild FantasyPlayer.sln /p:Configuration=Release
 
-        
       - name: Archive
         run: Compress-Archive -Path FantasyPlayer.Dalamud\bin\Release\* -DestinationPath FantasyPlayer.Dalamud.zip
 
@@ -47,10 +45,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: Release-${{ github.ref }}
-          release_name: Fantasy Player - ${{ github.ref }}
+          tag_name: Testing-${{ github.run_number }}
+          release_name: Fantasy Player - Testing ${{ github.run_number }}
           draft: false
-          prerelease: false
+          prerelease: true
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -60,7 +58,7 @@ jobs:
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           asset_path: ./FantasyPlayer.Dalamud.zip
-          asset_name: FantasyPlayer-Release-${{ github.ref }}.zip
+          asset_name: FantasyPlayer-Testing-${{ github.run_number }}.zip
           asset_content_type: application/zip 
 
       - name: Upload Plugin Def
