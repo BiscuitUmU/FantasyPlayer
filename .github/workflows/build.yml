@@ -1,0 +1,57 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Build FantasyPlayer
+
+# Controls when the action will run. Triggers the workflow on push or pull request
+# events but only for the master branch
+on:
+  push:
+    branches: [ master ]
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: [windows-latest]
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+      
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+        
+      - name: Setup NuGet
+        uses: NuGet/setup-nuget@v1.0.5
+        
+      - name: Restore NuGet Packages
+        run: nuget restore FantasyPlayer.sln
+
+      - name: Download Dalamud
+        run: |
+          Invoke-WebRequest -Uri https://goaaats.github.io/ffxiv/tools/launcher/addons/Hooks/latest.zip -OutFile latest.zip
+          Expand-Archive -Force latest.zip "$env:AppData\XIVLauncher\addon\Hooks\"
+      
+      - name: Build (Debug)
+        run: msbuild FantasyPlayer.sln /p:Configuration=Debug
+        
+      - name: Build (Release)
+        run: msbuild FantasyPlayer.sln /p:Configuration=Release
+        
+      - name: Upload Artifacts (Release)
+        uses: actions/upload-artifact@master
+        with:
+          name: FantasyPlayer-Release.${{ github.run_number }}
+          path: |
+            FantasyPlayer.Dalamud/bin/Debug/
+            FantasyPlayer.Spotify/bin/Debug
+            
+      - name: Upload Artifacts (Debug)
+        uses: actions/upload-artifact@master
+        with:
+          name: FantasyPlayer-Debug.${{ github.run_number }}
+          path: |
+            FantasyPlayer.Dalamud/bin/Debug/
+            FantasyPlayer.Spotify/bin/Debug
