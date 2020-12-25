@@ -39,7 +39,7 @@ jobs:
         run: msbuild FantasyPlayer.sln /p:Configuration=Release
 
       - name: Archive
-        run: Compress-Archive -Path FantasyPlayer.Dalamud\bin\Debug\* -DestinationPath FantasyPlayer.Dalamud.zip
+        run: Compress-Archive -Path FantasyPlayer.Dalamud\bin\Release\* -DestinationPath FantasyPlayer.Dalamud.zip
 
       - name: Create Release
         id: create_release
