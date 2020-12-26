@@ -12,6 +12,7 @@ namespace FantasyPlayer.Dalamud.Provider
 
         public void StartAuth();
         public void RetryAuth();
+        public void ReAuth();
 
         public void SwapRepeatState();
         public void SetPauseOrPlay(bool play);

@@ -1,6 +1,9 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Numerics;
+using Dalamud.Game.ClientState;
 using Dalamud.Interface;
+using FantasyPlayer.Dalamud.Config;
 using FantasyPlayer.Dalamud.Manager;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;
@@ -19,8 +22,9 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private float _progressDelta;
         private int _progressMs;
         private string _lastId;
+        private bool _lastBoundByDuty;
 
-        private readonly Vector2 _windowSizeWithoutAlbum = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
+        private readonly Vector2 _playerWindowSize = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
             89 * ImGui.GetIO().FontGlobalScale);
 
         private readonly Vector2 _windowSizeNoButtons = new Vector2(401 * ImGui.GetIO().FontGlobalScale,
@@ -51,12 +55,13 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             var cmdManager = _plugin.CommandManager;
 
-            // cmdManager.Commands.Remove("shuffle");
-            // cmdManager.Commands.Remove("next");
-            // cmdManager.Commands.Remove("back");
-            // cmdManager.Commands.Remove("pause");
-            // cmdManager.Commands.Remove("play");
-            // cmdManager.Commands.Remove("volume");
+            cmdManager.Commands.Remove("shuffle");
+            cmdManager.Commands.Remove("next");
+            cmdManager.Commands.Remove("back");
+            cmdManager.Commands.Remove("pause");
+            cmdManager.Commands.Remove("play");
+            cmdManager.Commands.Remove("volume");
+            cmdManager.Commands.Remove("relogin");
 
             cmdManager.Commands.Add("shuffle",
                 (OptionType.Boolean, new string[] { }, "Toggle shuffle.", OnShuffleCommand));
@@ -70,12 +75,33 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 (OptionType.None, new string[] { }, "Continue playback.", OnPlayCommand));
             cmdManager.Commands.Add("volume",
                 (OptionType.Int, new string[] { }, "Set playback volume.", OnVolumeCommand));
+
+            cmdManager.Commands.Add("relogin",
+                (OptionType.None, new string[] {"reauth"}, "Re-opens the login window and lets you re-login",
+                    OnReLoginCommand));
+        }
+
+        private void CheckClientState()
+        {
+            var isBoundByDuty = _plugin.PluginInterface.ClientState.Condition[ConditionFlag.BoundByDuty];
+            if (_plugin.Configuration.AutoPlaySettings.PlayInDuty && isBoundByDuty &&
+                !_playerManager.CurrentPlayerProvider.PlayerState.IsPlaying)
+            {
+                if (_lastBoundByDuty == false)
+                {
+                    _lastBoundByDuty = true;
+                    _playerManager.CurrentPlayerProvider.SetPauseOrPlay(true);
+                }
+            }
+
+            _lastBoundByDuty = isBoundByDuty;
         }
 
         public void WindowLoop()
         {
-            if (_playerManager.CurrentPlayerProvider == null)
-                return;
+            if (_plugin.Configuration.PlayerSettings.OnlyOpenWhenLoggedIn &&
+                _plugin.PluginInterface.ClientState.LocalContentId == 0)
+                return; //Do nothing
 
             if (_playerManager.CurrentPlayerProvider.PlayerState.RequiresLogin &&
                 !_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn)
@@ -83,40 +109,72 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (_playerManager.CurrentPlayerProvider != null && _plugin.Configuration.PlayerSettings.DebugWindowOpen)
                 DebugWindow(_playerManager.CurrentPlayerProvider.PlayerState);
-            
+
             if (_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn &&
                 _plugin.Configuration.PlayerSettings.PlayerWindowShown)
             {
                 CheckProvider(_playerManager.CurrentPlayerProvider);
                 MainWindow(_playerManager.CurrentPlayerProvider.PlayerState, _playerManager.CurrentPlayerProvider);
+                CheckClientState();
+            }
+        }
+
+        private void SetDefaultWindowSize(PlayerSettings playerSettings)
+        {
+            if (playerSettings.FirstRunNone)
+            {
+                ImGui.SetNextWindowSize(_playerWindowSize);
+                _plugin.Configuration.PlayerSettings.FirstRunNone = false;
+                _plugin.Configuration.Save();
+            }
+
+            if (playerSettings.CompactPlayer && playerSettings.FirstRunCompactPlayer)
+            {
+                ImGui.SetNextWindowSize(_windowSizeCompact);
+                _plugin.Configuration.PlayerSettings.FirstRunCompactPlayer = false;
+                _plugin.Configuration.Save();
+            }
+
+            if (playerSettings.NoButtons && playerSettings.FirstRunCompactPlayer)
+            {
+                ImGui.SetNextWindowSize(_windowSizeNoButtons);
+                _plugin.Configuration.PlayerSettings.FirstRunCompactPlayer = false;
+                _plugin.Configuration.Save();
+            }
+
+            if (_plugin.Configuration.SpotifySettings.LimitedAccess && playerSettings.FirstRunCompactPlayer)
+            {
+                ImGui.SetNextWindowSize(_windowSizeNoButtons);
+                _plugin.Configuration.PlayerSettings.FirstRunCompactPlayer = false;
+                _plugin.Configuration.Save();
             }
         }
 
         private void MainWindow(PlayerStateStruct playerState, IPlayerProvider currentProvider)
         {
             ImGui.SetNextWindowBgAlpha(_plugin.Configuration.PlayerSettings.Transparency);
-            ImGui.SetNextWindowSize(_windowSizeWithoutAlbum);
+            SetDefaultWindowSize(_plugin.Configuration.PlayerSettings);
 
-            if (_plugin.Configuration.PlayerSettings.CompactPlayer)
-                ImGui.SetNextWindowSize(_windowSizeCompact);
-
-            if (_plugin.Configuration.PlayerSettings.NoButtons)
-                ImGui.SetNextWindowSize(_windowSizeNoButtons);
-
-            if (_plugin.Configuration.SpotifySettings.LimitedAccess
-            ) //We should just remove the buttons because the user can't use them anyway :(
-                ImGui.SetNextWindowSize(_windowSizeNoButtons);
 
             var lockFlags = (_plugin.Configuration.PlayerSettings.PlayerLocked)
-                ? ImGuiWindowFlags.NoMove
+                ? ImGuiWindowFlags.NoMove | ImGuiWindowFlags.NoResize
                 : ImGuiWindowFlags.None;
 
             var clickThroughFlags = (_plugin.Configuration.PlayerSettings.DisableInput)
-                ? ImGuiWindowFlags.NoMouseInputs
+                ? ImGuiWindowFlags.NoMouseInputs | ImGuiWindowFlags.NoResize
                 : ImGuiWindowFlags.None;
 
-            if (!ImGui.Begin("Fantasy Player",
-                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoResize | lockFlags | clickThroughFlags)) return;
+            var playerSettings = _plugin.Configuration.PlayerSettings;
+            if (!ImGui.Begin($"Fantasy Player##C{playerSettings.CompactPlayer}&N{playerSettings.NoButtons}",
+                ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoScrollbar | lockFlags |
+                clickThroughFlags)) return;
+
+            //Disable FirstRun
+            if (_plugin.Configuration.PlayerSettings.FirstRunNone)
+            {
+                _plugin.Configuration.PlayerSettings.FirstRunNone = false;
+                _plugin.Configuration.Save();
+            }
 
             //////////////// Right click popup ////////////////
 
@@ -124,7 +182,18 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             {
                 if (!_plugin.Configuration.SpotifySettings.LimitedAccess)
                 {
-                    ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.PlayerSettings.CompactPlayer);
+                    if (ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.PlayerSettings.CompactPlayer))
+                    {
+                        if (_plugin.Configuration.PlayerSettings.NoButtons)
+                            _plugin.Configuration.PlayerSettings.NoButtons = false;
+                    }
+
+                    if (ImGui.MenuItem("Hide Buttons", null, ref _plugin.Configuration.PlayerSettings.NoButtons))
+                    {
+                        if (_plugin.Configuration.PlayerSettings.CompactPlayer)
+                            _plugin.Configuration.PlayerSettings.CompactPlayer = false;
+                    }
+
                     ImGui.Separator();
                 }
 
@@ -214,7 +283,9 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                     if (playerState.RepeatState != "off")
                         ImGui.PopStyleColor();
 
-                    ImGui.SameLine(ImGui.GetWindowSize().X - 32f);
+                    ImGui.SameLine(ImGui.GetWindowSize().X -
+                                   (ImGui.GetFontSize() +
+                                    ImGui.CalcTextSize(FontAwesomeIcon.Forward.ToIconString()).X));
                     if (ImGui.Button(FontAwesomeIcon.Forward.ToIconString()))
                         currentProvider.SetSkip(true);
 
@@ -253,7 +324,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
         private void LoginWindow(IPlayerProvider playerProvider)
         {
-            ImGui.SetNextWindowSize(_windowSizeWithoutAlbum);
+            ImGui.SetNextWindowSize(_playerWindowSize);
             if (!ImGui.Begin($"Fantasy Player: {playerProvider.PlayerState.ServiceName} Login",
                 ref _plugin.Configuration.PlayerSettings.PlayerWindowShown,
                 ImGuiWindowFlags.NoResize)) return;
@@ -291,10 +362,13 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         {
             if (!ImGui.Begin("Fantasy Player: Debug Window")) return;
 
-            foreach (var playerState in _playerManager.PlayerProviders
-                .Select(playerProvider => playerProvider.PlayerState)
-                .Where(playerState => playerState.ServiceName != null))
+            if (ImGui.Button("Reload providers"))
+                _playerManager.ReloadProviders();
+
+            foreach (var provider in _playerManager.PlayerProviders
+                .Where(provider => provider.PlayerState.ServiceName != null))
             {
+                var playerState = provider.PlayerState;
                 var providerText = playerState.ServiceName;
 
                 if (playerState.ServiceName == currentPlayerState.ServiceName)
@@ -311,6 +385,12 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
                 if (ImGui.CollapsingHeader(providerText + ": CurrentlyPlaying"))
                     RenderTrackStructDebug(playerState.CurrentlyPlaying);
+
+                if (playerState.ServiceName == currentPlayerState.ServiceName) continue;
+                if (ImGui.Button($"Set {playerState.ServiceName} as current provider"))
+                {
+                    _playerManager.CurrentPlayerProvider = provider;
+                }
             }
 
             ImGui.End();
@@ -318,17 +398,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
         //////////////// Commands ////////////////
 
-        private void OnDisplayCommand(bool boolValue, int intValue, CallbackResponse response)
-        {
-            if (response == CallbackResponse.SetValue)
-                _plugin.Configuration.PlayerSettings.PlayerWindowShown = boolValue;
 
-            if (response == CallbackResponse.ToggleValue)
-                _plugin.Configuration.PlayerSettings.PlayerWindowShown =
-                    !_plugin.Configuration.PlayerSettings.PlayerWindowShown;
+        private void OnReLoginCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            var playerState = _playerManager.CurrentPlayerProvider.PlayerState;
+            playerState.IsLoggedIn = false;
+            _playerManager.CurrentPlayerProvider.PlayerState = playerState;
+            _playerManager.CurrentPlayerProvider.ReAuth();
         }
 
-        public void OnVolumeCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnDisplayCommand(bool boolValue, int intValue, CallbackResponse response)
+        {
+            _plugin.Configuration.PlayerSettings.PlayerWindowShown = response switch
+            {
+                CallbackResponse.SetValue => boolValue,
+                CallbackResponse.ToggleValue => !_plugin.Configuration.PlayerSettings.PlayerWindowShown,
+                _ => _plugin.Configuration.PlayerSettings.PlayerWindowShown
+            };
+        }
+
+        private void OnVolumeCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;
@@ -337,36 +426,44 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _playerManager.CurrentPlayerProvider.SetVolume(intValue);
         }
 
-        public void OnShuffleCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnShuffleCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;
 
-            if (response == CallbackResponse.SetValue)
+            switch (response)
             {
-                if (boolValue)
-                    _plugin.DisplayMessage("Turned on shuffle.");
+                case CallbackResponse.SetValue:
+                {
+                    if (boolValue)
+                        _plugin.DisplayMessage("Turned on shuffle.");
 
-                if (!boolValue)
-                    _plugin.DisplayMessage("Turned off shuffle.");
+                    if (!boolValue)
+                        _plugin.DisplayMessage("Turned off shuffle.");
 
-                _playerManager.CurrentPlayerProvider.SetShuffle(boolValue);
-            }
+                    _playerManager.CurrentPlayerProvider.SetShuffle(boolValue);
+                    break;
+                }
+                case CallbackResponse.ToggleValue:
+                {
+                    if (!_playerManager.CurrentPlayerProvider.PlayerState.ShuffleState)
+                        _plugin.DisplayMessage("Turned on shuffle.");
 
-            if (response == CallbackResponse.ToggleValue)
-            {
-                if (!_playerManager.CurrentPlayerProvider.PlayerState.ShuffleState)
-                    _plugin.DisplayMessage("Turned on shuffle.");
+                    if (_playerManager.CurrentPlayerProvider.PlayerState.ShuffleState)
+                        _plugin.DisplayMessage("Turned off shuffle.");
 
-                if (_playerManager.CurrentPlayerProvider.PlayerState.ShuffleState)
-                    _plugin.DisplayMessage("Turned off shuffle.");
-
-                _playerManager.CurrentPlayerProvider.SetShuffle(!_playerManager.CurrentPlayerProvider.PlayerState
-                    .ShuffleState);
+                    _playerManager.CurrentPlayerProvider.SetShuffle(!_playerManager.CurrentPlayerProvider.PlayerState
+                        .ShuffleState);
+                    break;
+                }
+                case CallbackResponse.None:
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(response), response, null);
             }
         }
 
-        public void OnNextCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnNextCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;
@@ -375,7 +472,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _playerManager.CurrentPlayerProvider.SetSkip(true);
         }
 
-        public void OnBackCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnBackCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;
@@ -384,7 +481,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _playerManager.CurrentPlayerProvider.SetSkip(false);
         }
 
-        public void OnPlayCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnPlayCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;
@@ -396,7 +493,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _playerManager.CurrentPlayerProvider.SetPauseOrPlay(true);
         }
 
-        public void OnPauseCommand(bool boolValue, int intValue, CallbackResponse response)
+        private void OnPauseCommand(bool boolValue, int intValue, CallbackResponse response)
         {
             if (_playerManager.CurrentPlayerProvider.PlayerState.ServiceName == null)
                 return;

@@ -3,7 +3,6 @@
     public struct PlayerStateStruct
     {
         public string ServiceName;
-        public bool IsLimitedSession;
         public bool RequiresLogin;
         public bool IsLoggedIn;
         public bool IsAuthenticating;
@@ -13,6 +12,5 @@
         public bool IsPlaying;
         public int ProgressMs;
         public TrackStruct CurrentlyPlaying;
-        public TrackStruct LastPlaying;
     }
 }

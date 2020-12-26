@@ -10,7 +10,7 @@ namespace FantasyPlayer.Dalamud.Manager
     {
         private readonly Plugin _plugin;
         public List<IPlayerProvider> PlayerProviders;
-        
+
         public IPlayerProvider CurrentPlayerProvider;
 
         public PlayerManager(Plugin plugin)
@@ -20,13 +20,20 @@ namespace FantasyPlayer.Dalamud.Manager
             InitializeProviders();
         }
 
-        public void ResetProviders()
+        public void ReloadProviders()
+        {
+            DisposeProviders();
+            ResetProviders();
+            InitializeProviders();
+        }
+
+        private void ResetProviders()
         {
             CurrentPlayerProvider = default;
             PlayerProviders = new List<IPlayerProvider>();
         }
 
-        public void InitializeProviders()
+        private void InitializeProviders()
         {
             var ppType = typeof(IPlayerProvider);
             var interfaces = AppDomain.CurrentDomain.GetAssemblies()
@@ -36,15 +43,19 @@ namespace FantasyPlayer.Dalamud.Manager
             foreach (var playerProvider in interfaces)
             {
                 PluginLog.Log("Found provider: " + playerProvider.FullName);
-                InitializeProvider((IPlayerProvider)Activator.CreateInstance(playerProvider));
+                InitializeProvider((IPlayerProvider) Activator.CreateInstance(playerProvider), playerProvider.FullName);
             }
         }
 
-        private void InitializeProvider(IPlayerProvider playerProvider)
+        private void InitializeProvider(IPlayerProvider playerProvider, string typeFullName)
         {
             playerProvider.Initialize(_plugin);
             PlayerProviders.Add(playerProvider);
-            CurrentPlayerProvider ??= playerProvider;
+
+            //Hard-code this for now
+            if (playerProvider.PlayerState.ServiceName == "Spotify" &&
+                typeFullName == "FantasyPlayer.Dalamud.Provider.SpotifyProvider")
+                CurrentPlayerProvider ??= playerProvider;
         }
 
         private void Update()
@@ -53,12 +64,17 @@ namespace FantasyPlayer.Dalamud.Manager
                 playerProvider.Update();
         }
 
-        public void Dispose()
+        public void DisposeProviders()
         {
             foreach (var playerProvider in PlayerProviders)
             {
                 playerProvider.Dispose();
             }
+        }
+
+        public void Dispose()
+        {
+            DisposeProviders();
         }
     }
 }

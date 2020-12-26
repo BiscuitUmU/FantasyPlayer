@@ -95,13 +95,15 @@ namespace FantasyPlayer.Dalamud.Provider
             }
 
             _plugin.Configuration.Save();
-
-            if (!_spotifyState.IsPremiumUser)
-                return;
         }
 
         public void Update()
         {
+        }
+
+        public void ReAuth()
+        {
+            //StartAuth();
         }
 
         public void Dispose()

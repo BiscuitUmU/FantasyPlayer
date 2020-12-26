@@ -72,6 +72,7 @@
         <Reference Include="System.Xml" />
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Config\AutoPlaySettings.cs" />
         <Compile Include="Config\Configuration.cs" />
         <Compile Include="Config\PlayerSettings.cs" />
         <Compile Include="Config\SpotifySettings.cs" />
