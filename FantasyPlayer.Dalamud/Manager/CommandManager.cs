@@ -24,14 +24,12 @@ namespace FantasyPlayer.Dalamud.Manager
         private DalamudPluginInterface _pluginInterface;
         private Plugin _plugin;
 
-        public Dictionary<string, (OptionType type, string[] aliases, string helpString,
+        public readonly Dictionary<string, (OptionType type, string[] aliases, string helpString,
             Action<bool, int, CallbackResponse>
             commandCallback)> Commands =
             new Dictionary<string, (OptionType type, string[] aliases, string helpString,
                 Action<bool, int, CallbackResponse>
                 commandCallback)>();
-        
-        public string[] FriendlyOptions = {"none", "toggle", "number"};
 
         public CommandManager(DalamudPluginInterface pluginInterface, Plugin plugin)
         {
@@ -91,7 +89,7 @@ namespace FantasyPlayer.Dalamud.Manager
                         return;
                     }
 
-                    if (!int.TryParse(args[1], out int value)) return;
+                    if (!int.TryParse(args[1], out var value)) return;
                     cmd.commandCallback.Invoke(false, value, CallbackResponse.SetValue);
                     return;
                 }

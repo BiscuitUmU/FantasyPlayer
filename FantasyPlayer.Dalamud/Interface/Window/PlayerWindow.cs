@@ -16,9 +16,6 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         private readonly Plugin _plugin;
         private readonly PlayerManager _playerManager;
 
-        private bool _registeredCommands;
-        private string lastProviderName;
-
         private float _progressDelta;
         private int _progressMs;
         private string _lastId;
@@ -136,10 +133,10 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 _plugin.Configuration.Save();
             }
 
-            if (playerSettings.NoButtons && playerSettings.FirstRunCompactPlayer)
+            if (playerSettings.NoButtons && playerSettings.FirstRunSetNoButtons)
             {
                 ImGui.SetNextWindowSize(_windowSizeNoButtons);
-                _plugin.Configuration.PlayerSettings.FirstRunCompactPlayer = false;
+                _plugin.Configuration.PlayerSettings.FirstRunSetNoButtons = false;
                 _plugin.Configuration.Save();
             }
 

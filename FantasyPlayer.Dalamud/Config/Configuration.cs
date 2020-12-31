@@ -18,8 +18,6 @@ namespace FantasyPlayer.Dalamud.Config
 
         [NonSerialized] private DalamudPluginInterface _pluginInterface;
 
-        private Configuration _lastConfiguration;
-
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
             _pluginInterface = pluginInterface;
