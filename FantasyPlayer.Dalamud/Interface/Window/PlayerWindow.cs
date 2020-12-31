@@ -104,6 +104,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 return; //Do nothing
 
             if (_playerManager.CurrentPlayerProvider.PlayerState.RequiresLogin &&
+                _plugin.Configuration.PlayerSettings.PlayerWindowShown &&
                 !_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn)
                 LoginWindow(_playerManager.CurrentPlayerProvider);
 
@@ -338,7 +339,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             else
             {
                 InterfaceUtils.TextCentered("Waiting for a response to login... Please check your browser.");
-                if (InterfaceUtils.ButtonCentered("Reopen Url"))
+                if (InterfaceUtils.ButtonCentered("Re-open Url"))
                     playerProvider.RetryAuth();
             }
 
