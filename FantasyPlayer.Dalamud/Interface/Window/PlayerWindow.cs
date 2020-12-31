@@ -74,7 +74,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 (OptionType.Int, new string[] { }, "Set playback volume.", OnVolumeCommand));
 
             cmdManager.Commands.Add("relogin",
-                (OptionType.None, new string[] {"reauth"}, "Re-opens the login window and lets you re-login",
+                (OptionType.None, new string[] {"reauth"}, "Re-opens the login window and lets you login again",
                     OnReLoginCommand));
         }
 
@@ -100,15 +100,22 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 _plugin.PluginInterface.ClientState.LocalContentId == 0)
                 return; //Do nothing
 
-            if (_playerManager.CurrentPlayerProvider.PlayerState.RequiresLogin &&
+            if (_playerManager.CurrentPlayerProvider == null &&
+                _plugin.Configuration.PlayerSettings.PlayerWindowShown)
+                WelcomeWindow();
+
+            if (_playerManager.CurrentPlayerProvider != null &&
+                _playerManager.CurrentPlayerProvider.PlayerState.RequiresLogin &&
                 _plugin.Configuration.PlayerSettings.PlayerWindowShown &&
                 !_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn)
                 LoginWindow(_playerManager.CurrentPlayerProvider);
 
-            if (_playerManager.CurrentPlayerProvider != null && _plugin.Configuration.PlayerSettings.DebugWindowOpen)
+            if (_playerManager.CurrentPlayerProvider != null &&
+                _plugin.Configuration.PlayerSettings.DebugWindowOpen)
                 DebugWindow(_playerManager.CurrentPlayerProvider.PlayerState);
 
-            if (_playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn &&
+            if (_playerManager.CurrentPlayerProvider != null &&
+                _playerManager.CurrentPlayerProvider.PlayerState.IsLoggedIn &&
                 _plugin.Configuration.PlayerSettings.PlayerWindowShown)
             {
                 CheckProvider(_playerManager.CurrentPlayerProvider);
@@ -178,6 +185,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
             if (ImGui.BeginPopupContextWindow())
             {
+                if (_playerManager.PlayerProviders.Count > 1)
+                {
+                    if (ImGui.BeginMenu("Switch provider"))
+                    {
+                        foreach (var provider in _playerManager.PlayerProviders)
+                        {
+                            if (provider.Value == _playerManager.CurrentPlayerProvider) continue;
+                            if (ImGui.MenuItem(provider.Key.Name.Replace("Provider", "")))
+                            {
+                                _playerManager.CurrentPlayerProvider = provider.Value;
+                                _plugin.Configuration.PlayerSettings.DefaultProvider = provider.Key.FullName;
+                                _plugin.Configuration.Save();
+                            }
+                        }
+                        ImGui.EndMenu();
+                    }
+                    
+                    ImGui.Separator();
+                }
+
                 if (!_plugin.Configuration.SpotifySettings.LimitedAccess)
                 {
                     if (ImGui.MenuItem("Compact mode", null, ref _plugin.Configuration.PlayerSettings.CompactPlayer))
@@ -320,6 +347,26 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             ImGui.End();
         }
 
+        private void WelcomeWindow()
+        {
+            ImGui.SetNextWindowSize(_playerWindowSize);
+            if (!ImGui.Begin($"Fantasy Player: Welcome",
+                ref _plugin.Configuration.PlayerSettings.PlayerWindowShown,
+                ImGuiWindowFlags.NoResize)) return;
+
+            InterfaceUtils.TextCentered("Please select your default provider.");
+            foreach (var provider in _playerManager.PlayerProviders)
+            {
+                ImGui.SameLine();
+                if (ImGui.Button(provider.Key.Name.Replace("Provider", "")))
+                {
+                    _playerManager.CurrentPlayerProvider = provider.Value;
+                    _plugin.Configuration.PlayerSettings.DefaultProvider = provider.Key.FullName;
+                    _plugin.Configuration.Save();
+                }
+            }
+        }
+
         private void LoginWindow(IPlayerProvider playerProvider)
         {
             ImGui.SetNextWindowSize(_playerWindowSize);
@@ -364,9 +411,9 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 _playerManager.ReloadProviders();
 
             foreach (var provider in _playerManager.PlayerProviders
-                .Where(provider => provider.PlayerState.ServiceName != null))
+                .Where(provider => provider.Value.PlayerState.ServiceName != null))
             {
-                var playerState = provider.PlayerState;
+                var playerState = provider.Value.PlayerState;
                 var providerText = playerState.ServiceName;
 
                 if (playerState.ServiceName == currentPlayerState.ServiceName)
@@ -387,7 +434,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
                 if (playerState.ServiceName == currentPlayerState.ServiceName) continue;
                 if (ImGui.Button($"Set {playerState.ServiceName} as current provider"))
                 {
-                    _playerManager.CurrentPlayerProvider = provider;
+                    _playerManager.CurrentPlayerProvider = provider.Value;
                 }
             }
 

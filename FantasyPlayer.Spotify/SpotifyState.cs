@@ -77,11 +77,18 @@ namespace FantasyPlayer.Spotify
             if (TokenResponse == null)
                 return;
 
-            var newResponse = await new OAuthClient().RequestToken(
-                new PKCETokenRefreshRequest(_clientId, TokenResponse.RefreshToken)
-            );
-            
-            TokenResponse = newResponse;
+            try
+            {
+                var newResponse = await new OAuthClient().RequestToken(
+                    new PKCETokenRefreshRequest(_clientId, TokenResponse.RefreshToken)
+                );
+
+                TokenResponse = newResponse;
+            }
+            catch (Exception)
+            {
+                // Ignored
+            }
         }
 
         public async void Start()

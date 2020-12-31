@@ -1,15 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Provider;
+using FantasyPlayer.Dalamud.Provider.Common;
 
 namespace FantasyPlayer.Dalamud.Manager
 {
     public class PlayerManager
     {
         private readonly Plugin _plugin;
-        public List<IPlayerProvider> PlayerProviders;
+        public Dictionary<Type, IPlayerProvider> PlayerProviders;
 
         public IPlayerProvider CurrentPlayerProvider;
 
@@ -30,7 +31,7 @@ namespace FantasyPlayer.Dalamud.Manager
         private void ResetProviders()
         {
             CurrentPlayerProvider = default;
-            PlayerProviders = new List<IPlayerProvider>();
+            PlayerProviders = new Dictionary<Type, IPlayerProvider>();
         }
 
         private void InitializeProviders()
@@ -43,32 +44,30 @@ namespace FantasyPlayer.Dalamud.Manager
             foreach (var playerProvider in interfaces)
             {
                 PluginLog.Log("Found provider: " + playerProvider.FullName);
-                InitializeProvider((IPlayerProvider) Activator.CreateInstance(playerProvider), playerProvider.FullName);
+                InitializeProvider(playerProvider,  (IPlayerProvider)Activator.CreateInstance(playerProvider));
             }
         }
 
-        private void InitializeProvider(IPlayerProvider playerProvider, string typeFullName)
+        private void InitializeProvider(Type type, IPlayerProvider playerProvider)
         {
             playerProvider.Initialize(_plugin);
-            PlayerProviders.Add(playerProvider);
+            PlayerProviders.Add(type, playerProvider);
 
-            //Hard-code this for now
-            if (playerProvider.PlayerState.ServiceName == "Spotify" &&
-                typeFullName == "FantasyPlayer.Dalamud.Provider.SpotifyProvider")
+            if (_plugin.Configuration.PlayerSettings.DefaultProvider == type.FullName)
                 CurrentPlayerProvider ??= playerProvider;
         }
 
         private void Update()
         {
             foreach (var playerProvider in PlayerProviders)
-                playerProvider.Update();
+                playerProvider.Value.Update();
         }
 
-        public void DisposeProviders()
+        private void DisposeProviders()
         {
             foreach (var playerProvider in PlayerProviders)
             {
-                playerProvider.Dispose();
+                playerProvider.Value.Dispose();
             }
         }
 

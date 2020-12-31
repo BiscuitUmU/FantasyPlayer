@@ -87,9 +87,9 @@
         <Compile Include="Plugin.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="Provider\Common\AlbumStruct.cs" />
+        <Compile Include="Provider\Common\IPlayerProvider.cs" />
         <Compile Include="Provider\Common\PlayerStateStruct.cs" />
         <Compile Include="Provider\Common\TrackStruct.cs" />
-        <Compile Include="Provider\IPlayerProvider.cs" />
         <Compile Include="Provider\SpotifyProvider.cs" />
         <Compile Include="RemoteModel\Config.cs" />
         <Compile Include="VersionInfo.cs" />

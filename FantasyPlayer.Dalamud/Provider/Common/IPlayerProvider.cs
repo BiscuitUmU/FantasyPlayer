@@ -1,6 +1,4 @@
-﻿using FantasyPlayer.Dalamud.Provider.Common;
-
-namespace FantasyPlayer.Dalamud.Provider
+﻿namespace FantasyPlayer.Dalamud.Provider.Common
 {
     public interface IPlayerProvider
     {

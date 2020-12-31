@@ -22,9 +22,7 @@ namespace FantasyPlayer.Dalamud.Interface
         {
             var fontSize = ImGui.CalcTextSize(text).X;
             ImGui.SameLine((ImGui.GetWindowSize().X - fontSize) / 2);
-            if (ImGui.Button(text))
-                return true;
-            return false;
+            return ImGui.Button(text);
         }
     }
 }

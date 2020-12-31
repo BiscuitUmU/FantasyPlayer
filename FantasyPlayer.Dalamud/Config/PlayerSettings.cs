@@ -8,6 +8,7 @@ namespace FantasyPlayer.Dalamud.Config
         public float Transparency = 1f;
         
         public bool PlayerWindowShown = true;
+        public string DefaultProvider;
         
         public bool CompactPlayer;
         public bool NoButtons;
