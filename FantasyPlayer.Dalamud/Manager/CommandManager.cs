@@ -67,7 +67,10 @@ namespace FantasyPlayer.Dalamud.Manager
                 if (cmd.type == OptionType.Boolean)
                 {
                     if (args.Length < 2)
+                    {
                         cmd.commandCallback.Invoke(false, 0, CallbackResponse.ToggleValue);
+                        return;
+                    }
 
                     if (args[1] == "toggle")
                         cmd.commandCallback.Invoke(false, 0, CallbackResponse.ToggleValue);

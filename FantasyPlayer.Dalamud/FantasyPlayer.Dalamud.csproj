@@ -79,6 +79,7 @@
         <Compile Include="Constants.cs" />
         <Compile Include="Interface\InterfaceController.cs" />
         <Compile Include="Interface\InterfaceUtils.cs" />
+        <Compile Include="Interface\Window\ErrorWindow.cs" />
         <Compile Include="Interface\Window\PlayerWindow.cs" />
         <Compile Include="Interface\Window\SettingsWindow.cs" />
         <Compile Include="Manager\CommandManager.cs" />
