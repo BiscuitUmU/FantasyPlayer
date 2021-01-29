@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;
@@ -37,9 +38,23 @@ namespace FantasyPlayer.Dalamud.Manager
         private void InitializeProviders()
         {
             var ppType = typeof(IPlayerProvider);
-            var interfaces = AppDomain.CurrentDomain.GetAssemblies()
-                .SelectMany(s => s.GetTypes())
-                .Where(p => ppType.IsAssignableFrom(p) && !p.IsInterface);
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var interfaces = new List<Type> { };
+            for (int i = 0; i < assemblies.Length; i++)
+            {
+                var potentiallyBad = assemblies[i];
+                try
+                {
+                    interfaces.AddRange(potentiallyBad
+                        .GetTypes()
+                        .Where(type => ppType.IsAssignableFrom(type) && !type.IsInterface));
+                }
+                catch (ReflectionTypeLoadException rtle)
+                {
+                    PluginLog.LogError(rtle, rtle.Message, rtle.LoaderExceptions);
+                    PluginLog.LogError($"Error loading Assembly while searching for PlayerProviders: \"{potentiallyBad.FullName}\"");
+                }
+            }
 
             foreach (var playerProvider in interfaces)
             {
