@@ -5,6 +5,7 @@ using System.Reflection;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;
+using FantasyPlayer.Dalamud.Util;
 
 namespace FantasyPlayer.Dalamud.Manager
 {
@@ -22,11 +23,7 @@ namespace FantasyPlayer.Dalamud.Manager
         {
             _plugin = plugin;
             ResetProviders();
-            if (!InitializeProviders())
-            {
-                ErrorMessage =
-                    "Uh-oh, it looks like providers failed to initialize!\nPlease ping Biscuit#0001 in the goat place Discord and provide a log.";
-            }
+            HandleProviderInitialisationAndErrors();
         }
 
         public void ReloadProviders()
@@ -34,11 +31,7 @@ namespace FantasyPlayer.Dalamud.Manager
             PluginLog.Log("Reloading all providers...");
             DisposeProviders();
             ResetProviders();
-            if (!InitializeProviders())
-            {
-                ErrorMessage =
-                    "Uh-oh, it looks like providers failed to initialize!\nPlease ping Biscuit#0001 in the goat place Discord and provide a log.";
-            }
+            HandleProviderInitialisationAndErrors();
         }
 
         private void ResetProviders()
@@ -47,7 +40,21 @@ namespace FantasyPlayer.Dalamud.Manager
             PlayerProviders = new Dictionary<Type, IPlayerProvider>();
         }
 
-        private bool InitializeProviders()
+        private void HandleProviderInitialisationAndErrors()
+        {
+            if (!InitializeProviders(out var e))
+            {
+                ErrorMessage =
+                    $@"Uh-oh, it looks like providers failed to initialize!
+Please ping Biscuit#0001 in the goat place Discord and provide this log.
+
+{e}
+{e.StackTrace}
+{(e as ReflectionTypeLoadException)?.LoaderExceptions?.Select(e => e.ToString())?.FlattenStringArray() ?? string.Empty}";
+            }
+        }
+
+        private bool InitializeProviders(out Exception e)
         {
             var ppType = typeof(IPlayerProvider);
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -60,43 +67,49 @@ namespace FantasyPlayer.Dalamud.Manager
                     interfaces.AddRange(potentiallyBad
                         .GetTypes()
                         .Where(type => ppType.IsAssignableFrom(type) && !type.IsInterface));
+                    
+                    foreach (var playerProvider in interfaces)
+                    {
+                        PluginLog.Log("Found provider: " + playerProvider.FullName);
+                        InitializeProvider(playerProvider, (IPlayerProvider) Activator.CreateInstance(playerProvider));
+                    }
                 }
                 catch (ReflectionTypeLoadException rtle)
                 {
                     PluginLog.LogError(rtle, rtle.Message, rtle.LoaderExceptions);
                     PluginLog.LogError($"Error loading Assembly while searching for PlayerProviders: \"{potentiallyBad.FullName}\"");
-                }
-            }
-
-            try
-            {
-
-                foreach (var playerProvider in interfaces)
-                {
-                    PluginLog.Log("Found provider: " + playerProvider.FullName);
-                    InitializeProvider(playerProvider, (IPlayerProvider) Activator.CreateInstance(playerProvider));
-                }
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error("Failed to parse interfaces... Something did the bad...");
-                if (e is ReflectionTypeLoadException typeLoadException)
-                {
-                    var loaderExceptions  = typeLoadException.LoaderExceptions;
-                    foreach (var loaderException in loaderExceptions)
+                    foreach (var loaderException in rtle.LoaderExceptions)
                     {
-                        PluginLog.Error("Loader exception: " + loaderException);
+                        PluginLog.Error($"Loader exception: \"{loaderException}\"");
                     }
-                }
-                
-                //retry init
-                if (_retryCount > 2)
-                    return false;
 
-                _retryCount += 1;
-                ReloadProviders();
+                    //retry init
+                    if (_retryCount > 2)
+                    {
+                        e = rtle;
+                        return false;
+                    }
+
+                    _retryCount += 1;
+                    ReloadProviders();
+                }
+                catch (Exception e2)
+                {
+                    PluginLog.LogError(e2, e2.Message);
+
+                    //retry init
+                    if (_retryCount > 2)
+                    {
+                        e = e2;
+                        return false;
+                    }
+
+                    _retryCount += 1;
+                    ReloadProviders();
+                }
             }
 
+            e = null;
             return true;
         }
 
