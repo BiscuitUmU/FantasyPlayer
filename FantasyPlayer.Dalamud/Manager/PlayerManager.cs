@@ -13,11 +13,8 @@ namespace FantasyPlayer.Dalamud.Manager
     {
         private readonly Plugin _plugin;
         public Dictionary<Type, IPlayerProvider> PlayerProviders;
-
         public IPlayerProvider CurrentPlayerProvider;
         public string ErrorMessage;
-
-        private int _retryCount;
 
         public PlayerManager(Plugin plugin)
         {
@@ -42,23 +39,20 @@ namespace FantasyPlayer.Dalamud.Manager
 
         private void HandleProviderInitialisationAndErrors()
         {
-            if (!InitializeProviders(out var e))
+            if (!InitializeProviders())
             {
                 ErrorMessage =
-                    $@"Uh-oh, it looks like providers failed to initialize!
-Please ping Biscuit#0001 in the goat place Discord and provide this log.
-
-{e}
-{e.StackTrace}
-{(e as ReflectionTypeLoadException)?.LoaderExceptions?.Select(e => e.ToString())?.FlattenStringArray() ?? string.Empty}";
+                    $@"Uh-oh, it looks like providers may have failed to initialize!
+Please ping Biscuit#0001 in the goat place Discord and provide the Dalamud log.";
             }
         }
 
-        private bool InitializeProviders(out Exception e)
+        private bool InitializeProviders()
         {
             var ppType = typeof(IPlayerProvider);
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var interfaces = new List<Type> { };
+            var errorFree = true;
             for (int i = 0; i < assemblies.Length; i++)
             {
                 var potentiallyBad = assemblies[i];
@@ -83,38 +77,23 @@ Please ping Biscuit#0001 in the goat place Discord and provide this log.
                         PluginLog.Error($"Loader exception: \"{loaderException}\"");
                     }
 
-                    //retry init
-                    if (_retryCount > 2)
-                    {
-                        e = rtle;
-                        return false;
-                    }
-
-                    _retryCount += 1;
-                    ReloadProviders();
+                    errorFree = false;
                 }
                 catch (Exception e2)
                 {
                     PluginLog.LogError(e2, e2.Message);
-
-                    //retry init
-                    if (_retryCount > 2)
-                    {
-                        e = e2;
-                        return false;
-                    }
-
-                    _retryCount += 1;
-                    ReloadProviders();
+                    errorFree = false;
                 }
             }
 
-            e = null;
-            return true;
+            return errorFree;
         }
 
         private void InitializeProvider(Type type, IPlayerProvider playerProvider)
         {
+            if (PlayerProviders.ContainsKey(type))
+                return;
+            
             PluginLog.Log("Initializing provider: " + type.FullName);
             playerProvider.Initialize(_plugin);
             PlayerProviders.Add(type, playerProvider);
