@@ -534,7 +534,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             string displayInfo = null;
             if (_playerManager.CurrentPlayerProvider.PlayerState.CurrentlyPlaying.Id != null)
                 displayInfo = _playerManager.CurrentPlayerProvider.PlayerState.CurrentlyPlaying.Name;
-            _plugin.DisplayMessage($"Playing '{displayInfo}'...");
+            _plugin.DisplaySongTitle(displayInfo); //$"Playing '{displayInfo}'..."
             _playerManager.CurrentPlayerProvider.SetPauseOrPlay(true);
         }
 

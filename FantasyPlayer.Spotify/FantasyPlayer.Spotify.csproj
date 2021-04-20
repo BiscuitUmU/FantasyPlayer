@@ -6,11 +6,11 @@
     <AssemblyTitle>FantasyPlayer.Spotify</AssemblyTitle>
     <Product>FantasyPlayer.Spotify</Product>
     <Copyright>Copyright ©  2020</Copyright>
-    <Deterministic>false</Deterministic>
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>

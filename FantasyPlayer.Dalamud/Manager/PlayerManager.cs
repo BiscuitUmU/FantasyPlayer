@@ -42,18 +42,18 @@ namespace FantasyPlayer.Dalamud.Manager
             if (!InitializeProviders())
             {
                 ErrorMessage =
-                    $@"Uh-oh, it looks like providers may have failed to initialize!
-Please ping Biscuit#0001 in the goat place Discord and provide the Dalamud log.";
+                    @"Uh-oh, it looks like providers may have failed to initialize!
+Please ping Kazumi#8495 or Biscuit#0001 in the goat place Discord and provide the Dalamud log.";
             }
         }
 
         private bool InitializeProviders()
         {
             var ppType = typeof(IPlayerProvider);
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.Contains("FantasyPlayer")).ToList();
             var interfaces = new List<Type> { };
             var errorFree = true;
-            for (int i = 0; i < assemblies.Length; i++)
+            for (int i = 0; i < assemblies.Count; i++)
             {
                 var potentiallyBad = assemblies[i];
                 try
@@ -61,12 +61,6 @@ Please ping Biscuit#0001 in the goat place Discord and provide the Dalamud log."
                     interfaces.AddRange(potentiallyBad
                         .GetTypes()
                         .Where(type => ppType.IsAssignableFrom(type) && !type.IsInterface));
-                    
-                    foreach (var playerProvider in interfaces)
-                    {
-                        PluginLog.Log("Found provider: " + playerProvider.FullName);
-                        InitializeProvider(playerProvider, (IPlayerProvider) Activator.CreateInstance(playerProvider));
-                    }
                 }
                 catch (ReflectionTypeLoadException rtle)
                 {
@@ -83,6 +77,12 @@ Please ping Biscuit#0001 in the goat place Discord and provide the Dalamud log."
                 {
                     PluginLog.LogError(e2, e2.Message);
                     errorFree = false;
+                }
+
+                foreach (var playerProvider in interfaces)
+                {
+                    PluginLog.Log("Found provider: " + playerProvider.FullName);
+                    InitializeProvider(playerProvider, (IPlayerProvider)Activator.CreateInstance(playerProvider));
                 }
             }
 

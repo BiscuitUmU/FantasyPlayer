@@ -6,7 +6,6 @@
     <AssemblyTitle>FantasyPlayer.Dalamud</AssemblyTitle>
     <Product>FantasyPlayer.Dalamud</Product>
     <Copyright>Copyright ©  2020</Copyright>
-    <Deterministic>false</Deterministic>
     <OutputPath>bin\$(Configuration)\</OutputPath>
   </PropertyGroup>
   <PropertyGroup>
@@ -14,17 +13,18 @@
   </PropertyGroup> 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugType>full</DebugType>
+    <Deterministic>false</Deterministic>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <AllowedReferenceRelatedFileExtensions>
       <!-- Prevent default XML and PDB files copied to output in RELEASE. Only *.allowedextension files will be included, which doesn't exist in my case. -->
-          *.pdb;
-          *.xml
-        </AllowedReferenceRelatedFileExtensions>
+      *.pdb;
+      *.xml
+    </AllowedReferenceRelatedFileExtensions>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="1.2.0" />
+    <PackageReference Include="DalamudPackager" Version="1.2.1" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="SpotifyAPI.Web" Version="6.0.0" />
   </ItemGroup>

@@ -1,7 +1,9 @@
 ﻿using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FantasyPlayer.Dalamud.Provider.Common;
 using FantasyPlayer.Spotify;
+using FantasyPlayer.Dalamud.Util;
 using SpotifyAPI.Web;
 
 namespace FantasyPlayer.Dalamud.Provider
@@ -34,7 +36,7 @@ namespace FantasyPlayer.Dalamud.Provider
             
             if (_plugin.Configuration.SpotifySettings.TokenResponse == null) return;
             _spotifyState.TokenResponse = _plugin.Configuration.SpotifySettings.TokenResponse;
-            _spotifyState.RequestToken();
+            _spotifyState.RequestToken().Forget();
             _startThread = new Thread(_spotifyState.Start);
             _startThread.Start();
         }
@@ -42,7 +44,7 @@ namespace FantasyPlayer.Dalamud.Provider
         private void OnPlayerStateUpdate(CurrentlyPlayingContext currentlyPlaying, FullTrack playbackItem)
         {
             if (playbackItem.Id != _lastId)
-                _plugin.DisplayMessage($"Playing '{playbackItem.Name}'...");
+                _plugin.DisplaySongTitle(playbackItem.Name);
             _lastId = playbackItem.Id;
 
 
