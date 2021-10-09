@@ -12,6 +12,8 @@ namespace FantasyPlayer.Dalamud
     using FPCommandManager = Manager.CommandManager;
     using global::Dalamud.Game.ClientState;
     using global::Dalamud.Game.ClientState.Conditions;
+    using global::Dalamud.Game.Text.SeStringHandling;
+    using global::Dalamud.Game.Text.SeStringHandling.Payloads;
 
     public class Plugin : IDalamudPlugin
     {
@@ -77,7 +79,7 @@ namespace FantasyPlayer.Dalamud
         public void DisplayMessage(string message)
         {
             if (Configuration.DisplayChatMessages)
-                PluginInterface.Framework.Gui.Chat.Print(message);
+                ChatGui.Print(message);
         }
 
         public void DisplaySongTitle(string songTitle)

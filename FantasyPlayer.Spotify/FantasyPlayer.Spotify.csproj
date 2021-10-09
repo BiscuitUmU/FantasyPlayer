@@ -16,7 +16,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebugType>full</DebugType>
     <Deterministic>false</Deterministic>
-	  <AssemblyVersion>1.9.0.0-preview*</AssemblyVersion>
+	  <AssemblyVersion>1.9.0.0</AssemblyVersion>
 	  <FileVersion>1.9.0.0-preview*</FileVersion>
   </PropertyGroup>
 	
@@ -36,7 +36,7 @@
   </ItemGroup>
 	
   <ItemGroup>
-	<AssemblyAttribute Include="System.ComVisibleAttribute">
+	<AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute">
 	  <_Parameter1>false</_Parameter1>
 	</AssemblyAttribute>
   </ItemGroup>
