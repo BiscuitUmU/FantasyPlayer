@@ -1,33 +1,41 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	
   <PropertyGroup>
     <ProjectGuid>{7C8F3B5E-12F3-43F5-9080-B58471ABB7A1}</ProjectGuid>
-    <TargetFramework>net472</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <TargetFramework>net5.0-windows10.0.20348.0</TargetFramework>
+	<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <LangVersion>10</LangVersion>
     <AssemblyTitle>FantasyPlayer.Dalamud</AssemblyTitle>
     <Product>FantasyPlayer.Dalamud</Product>
     <Copyright>Copyright ©  2020</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+    <Platforms>x64</Platforms>
   </PropertyGroup>
-  <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup> 
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DebugType>full</DebugType>
     <Deterministic>false</Deterministic>
+	<AssemblyVersion>2.9.0.0-preview*</AssemblyVersion>
+	<FileVersion>2.9.0.0-preview*</FileVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DebugType>pdbonly</DebugType>
     <AllowedReferenceRelatedFileExtensions>
       <!-- Prevent default XML and PDB files copied to output in RELEASE. Only *.allowedextension files will be included, which doesn't exist in my case. -->
-      *.pdb;
-      *.xml
+          *.pdb;
+          *.xml
     </AllowedReferenceRelatedFileExtensions>
+	<AssemblyVersion>2.9.0.0</AssemblyVersion>
+	<FileVersion>2.9.0.0</FileVersion>	
   </PropertyGroup>
+	
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="1.2.1" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="SpotifyAPI.Web" Version="6.0.0" />
+    <PackageReference Include="DalamudPackager" Version="2.1.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SpotifyAPI.Web" Version="6.2.2" />
   </ItemGroup>
+	
   <ItemGroup>
     <Reference Include="Dalamud">
       <HintPath>$(DALAMUD_ROOT)\Dalamud.dll</HintPath>
@@ -48,7 +56,15 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+	
   <ItemGroup>
     <ProjectReference Include="..\FantasyPlayer.Spotify\FantasyPlayer.Spotify.csproj" />
   </ItemGroup>
+	
+  <ItemGroup>
+	<AssemblyAttribute Include="System.ComVisibleAttribute">
+      <_Parameter1>false</_Parameter1>
+	</AssemblyAttribute>
+  </ItemGroup>
+	
 </Project>
