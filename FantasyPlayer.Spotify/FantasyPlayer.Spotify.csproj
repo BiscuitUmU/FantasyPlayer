@@ -1,32 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+	
   <PropertyGroup>
     <ProjectGuid>{64E9DE35-E1B3-467B-8AD5-E36BAB2A3F27}</ProjectGuid>
-    <TargetFramework>net472</TargetFramework>
-    <LangVersion>8</LangVersion>
+    <TargetFramework>net5.0-windows10.0.20348.0</TargetFramework>
+	<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <LangVersion>10</LangVersion>
     <AssemblyTitle>FantasyPlayer.Spotify</AssemblyTitle>
     <Product>FantasyPlayer.Spotify</Product>
     <Copyright>Copyright ©  2020</Copyright>
-    <Deterministic>false</Deterministic>
     <OutputPath>bin\$(Configuration)\</OutputPath>
+	<Platforms>x64</Platforms>
+	<Nullable>enable</Nullable>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+	
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <DebugType>full</DebugType>
+    <Deterministic>false</Deterministic>
+	  <AssemblyVersion>1.9.0.0-preview*</AssemblyVersion>
+	  <FileVersion>1.9.0.0-preview*</FileVersion>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+	
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <DebugType>pdbonly</DebugType>
+	  <AssemblyVersion>1.9.0.0</AssemblyVersion>
+	  <FileVersion>1.9.0.0</FileVersion>
   </PropertyGroup>
-  <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-  </PropertyGroup> 
+	
   <ItemGroup>
     <PackageReference Include="EmbedIO" Version="3.4.3" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="SpotifyAPI.Web" Version="6.0.0" />
-    <PackageReference Include="SpotifyAPI.Web.Auth" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="SpotifyAPI.Web" Version="6.2.2" />
+    <PackageReference Include="SpotifyAPI.Web.Auth" Version="6.2.2" />
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
-    <PackageReference Include="Unosquare.Swan.Lite" Version="3.0.0" />
+    <PackageReference Include="Unosquare.Swan.Lite" Version="3.1.0" />
   </ItemGroup>
+	
   <ItemGroup>
-    <Reference Include="mscorlib" />
+	<AssemblyAttribute Include="System.ComVisibleAttribute">
+	  <_Parameter1>false</_Parameter1>
+	</AssemblyAttribute>
   </ItemGroup>
+	
 </Project>

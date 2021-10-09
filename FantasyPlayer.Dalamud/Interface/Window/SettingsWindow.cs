@@ -12,7 +12,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         {
             _plugin = plugin;
 
-            _plugin.CommandManager.Commands.Add("config",
+            _plugin.FPCommandManager.Commands.Add("config",
                 (OptionType.Boolean, new string[] {"settings"}, "Toggles config display.", OnConfigCommand));
         }
 

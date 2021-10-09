@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;

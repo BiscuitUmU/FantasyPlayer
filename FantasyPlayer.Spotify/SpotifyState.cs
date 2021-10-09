@@ -7,7 +7,7 @@ using SpotifyAPI.Web.Auth;
 
 namespace FantasyPlayer.Spotify
 {
-    public class SpotifyState
+    public sealed class SpotifyState : IDisposable
     {
         //TODO: put this in costs!
         private readonly Uri _loginUrl;
@@ -15,29 +15,29 @@ namespace FantasyPlayer.Spotify
         private readonly int _playerRefreshTime;
         private readonly EmbedIOAuthServer _server;
 
-        private SpotifyClient _spotifyClient;
-        private PKCEAuthenticator _authenticator;
+        private SpotifyClient? _spotifyClient;
+        private PKCEAuthenticator? _authenticator;
         
-        private FullTrack _lastFullTrack;
-        private PrivateUser _user;
+        private FullTrack? _lastFullTrack;
+        private PrivateUser? _user;
         public bool IsPremiumUser;
-        private string _deviceId;
+        private string? _deviceId;
 
-        public PKCETokenResponse TokenResponse;
+        public PKCETokenResponse? TokenResponse;
 
-        public CurrentlyPlayingContext CurrentlyPlaying;
+        public CurrentlyPlayingContext? CurrentlyPlaying;
         public delegate void OnPlayerStateUpdateDelegate(CurrentlyPlayingContext currentlyPlaying,
             FullTrack playbackItem);
 
-        public OnPlayerStateUpdateDelegate OnPlayerStateUpdate;
+        public OnPlayerStateUpdateDelegate? OnPlayerStateUpdate;
 
         public delegate void OnLoggedInDelegate(PrivateUser privateUser, PKCETokenResponse tokenResponse);
 
-        public OnLoggedInDelegate OnLoggedIn;
+        public OnLoggedInDelegate? OnLoggedIn;
 
-        private static Thread _stateThread;
+        private CancellationTokenSource? _stateTaskCancellationTokenSource;
 
-        private readonly ICollection<String> _scopes = new List<string>
+        private readonly ICollection<string> _scopes = new List<string>
         {
             Scopes.UserReadPrivate,
             Scopes.UserReadPlaybackState,
@@ -45,9 +45,9 @@ namespace FantasyPlayer.Spotify
             Scopes.UserReadCurrentlyPlaying
         };
 
-        private string _challenge;
-        private string _verifier;
-        private LoginRequest _loginRequest;
+        private string? _challenge;
+        private string? _verifier;
+        private LoginRequest? _loginRequest;
 
         public SpotifyState(string loginUri, string clientId, int port, int playerRefreshTime)
         {
@@ -113,22 +113,23 @@ namespace FantasyPlayer.Spotify
                     IsPremiumUser = true;
 
                 OnLoggedIn?.Invoke(_user, TokenResponse);
-                _stateThread = new Thread(StateUpdateTimer);
-                _stateThread.Start();
+
+                _stateTaskCancellationTokenSource = new CancellationTokenSource();
+                var token = _stateTaskCancellationTokenSource.Token;
+                var task = new Task(async (token) => 
+                {
+                    while (!((CancellationToken)token!).IsCancellationRequested)
+                    {
+                        var delayTask = Task.Delay(_playerRefreshTime); //Run timer every _playerRefreshTime
+                        await CheckPlayerState();
+                        await delayTask;
+                    }
+                }, _stateTaskCancellationTokenSource.Token);
+                task.Start();
             }
             catch (Exception e)
             {
                 //We will just ignore for now, this should be handled better though
-            }
-        }
-
-        private async void StateUpdateTimer()
-        {
-            while (true)
-            {
-                var delayTask = Task.Delay(_playerRefreshTime); //Run timer every _playerRefreshTime
-                await CheckPlayerState();
-                await delayTask;
             }
         }
 
@@ -209,7 +210,7 @@ namespace FantasyPlayer.Spotify
         {
             try
             {
-                if (CurrentlyPlaying == null) return;
+                if (CurrentlyPlaying == null || _spotifyClient == null) return;
                 if (play)
                     _spotifyClient.Player.ResumePlayback(new PlayerResumePlaybackRequest {DeviceId = _deviceId});
 
@@ -286,9 +287,9 @@ namespace FantasyPlayer.Spotify
             }
         }
 
-        public void Dispose()
+        void IDisposable.Dispose()
         {
-            _stateThread?.Abort();
+            _stateTaskCancellationTokenSource?.Cancel();
             _server?.Stop();
         }
     }
