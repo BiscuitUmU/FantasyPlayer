@@ -1,24 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	
+
   <PropertyGroup>
     <ProjectGuid>{7C8F3B5E-12F3-43F5-9080-B58471ABB7A1}</ProjectGuid>
-    <TargetFramework>net5.0-windows10.0.20348.0</TargetFramework>
-	<SupportedOSPlatformVersion>10.0.19041.0</SupportedOSPlatformVersion>
+    <TargetFramework>net5.0-windows</TargetFramework>
     <LangVersion>10</LangVersion>
+    <AssemblyName>FantasyPlayer.Dalamud</AssemblyName>
     <AssemblyTitle>FantasyPlayer.Dalamud</AssemblyTitle>
     <Product>FantasyPlayer.Dalamud</Product>
-    <Copyright>Copyright ©  2020</Copyright>
+    <Copyright>Copyright ©  2020-2022</Copyright>
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <Platforms>x64</Platforms>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>   
   </PropertyGroup>
-	
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x64' ">
     <DebugType>full</DebugType>
     <Deterministic>false</Deterministic>
-	<AssemblyVersion>2.9.0.0</AssemblyVersion>
-	<FileVersion>2.9.0.0-preview*</FileVersion>
+    <AssemblyVersion>2.9.6.1</AssemblyVersion>
+    <FileVersion>2.9.6.1-preview*</FileVersion>
   </PropertyGroup>
-	
+
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x64' ">
     <DebugType>pdbonly</DebugType>
     <AllowedReferenceRelatedFileExtensions>
@@ -26,16 +27,16 @@
           *.pdb;
           *.xml
     </AllowedReferenceRelatedFileExtensions>
-	<AssemblyVersion>2.9.0.0</AssemblyVersion>
-	<FileVersion>2.9.0.0</FileVersion>	
+    <AssemblyVersion>2.9.6.1</AssemblyVersion>
+    <FileVersion>2.9.6.1</FileVersion>	
   </PropertyGroup>
-	
+
   <ItemGroup>
-    <PackageReference Include="DalamudPackager" Version="2.1.4" />
+    <PackageReference Include="DalamudPackager" Version="2.1.5" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="SpotifyAPI.Web" Version="6.2.2" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <Reference Include="Dalamud">
       <HintPath>$(DALAMUD_ROOT)\Dalamud.dll</HintPath>
@@ -56,15 +57,15 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-	
+
   <ItemGroup>
     <ProjectReference Include="..\FantasyPlayer.Spotify\FantasyPlayer.Spotify.csproj" />
   </ItemGroup>
-	
+
   <ItemGroup>
     <AssemblyAttribute Include="System.Runtime.InteropServices.ComVisibleAttribute">
       <_Parameter1>false</_Parameter1>
-	</AssemblyAttribute>
+    </AssemblyAttribute>
   </ItemGroup>
-	
+
 </Project>

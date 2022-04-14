@@ -42,6 +42,7 @@ namespace FantasyPlayer.Dalamud
             Condition condition)
         {
             PluginInterface = dalamudPluginInterface;
+            DCommandManager = commandManager;
             ChatGui = chatGui;
             ClientState = clientState;
             Condition = condition;
