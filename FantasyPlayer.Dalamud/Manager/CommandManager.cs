@@ -43,7 +43,7 @@ namespace FantasyPlayer.Dalamud.Manager
         {
             var args = argsString.ToLower().Split(' ');
 
-            var chat = _pluginInterface.Framework.Gui.Chat;
+            var chat = _plugin.ChatGui;
 
             if (args.Length == 0)
                 PrintHelp(false, 0, CallbackResponse.None);
@@ -67,7 +67,10 @@ namespace FantasyPlayer.Dalamud.Manager
                 if (cmd.type == OptionType.Boolean)
                 {
                     if (args.Length < 2)
+                    {
                         cmd.commandCallback.Invoke(false, 0, CallbackResponse.ToggleValue);
+                        return;
+                    }
 
                     if (args[1] == "toggle")
                         cmd.commandCallback.Invoke(false, 0, CallbackResponse.ToggleValue);
@@ -100,7 +103,7 @@ namespace FantasyPlayer.Dalamud.Manager
 
         private void PrintHelp(bool boolValue, int intValue, CallbackResponse response)
         {
-            var chat = _pluginInterface.Framework.Gui.Chat;
+            var chat = _plugin.ChatGui;
 
             var helpMessage = "";
             helpMessage += "Fantasy Player Command Help:\n";

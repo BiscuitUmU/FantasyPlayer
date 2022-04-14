@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using Dalamud.Logging;
 using Dalamud.Plugin;
 using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;
+using FantasyPlayer.Dalamud.Util;
 
 namespace FantasyPlayer.Dalamud.Manager
 {
@@ -12,21 +14,22 @@ namespace FantasyPlayer.Dalamud.Manager
     {
         private readonly Plugin _plugin;
         public Dictionary<Type, IPlayerProvider> PlayerProviders;
-
         public IPlayerProvider CurrentPlayerProvider;
+        public string ErrorMessage;
 
         public PlayerManager(Plugin plugin)
         {
             _plugin = plugin;
             ResetProviders();
-            InitializeProviders();
+            HandleProviderInitialisationAndErrors();
         }
 
         public void ReloadProviders()
         {
+            PluginLog.Log("Reloading all providers...");
             DisposeProviders();
             ResetProviders();
-            InitializeProviders();
+            HandleProviderInitialisationAndErrors();
         }
 
         private void ResetProviders()
@@ -35,12 +38,23 @@ namespace FantasyPlayer.Dalamud.Manager
             PlayerProviders = new Dictionary<Type, IPlayerProvider>();
         }
 
-        private void InitializeProviders()
+        private void HandleProviderInitialisationAndErrors()
+        {
+            if (!InitializeProviders())
+            {
+                ErrorMessage =
+                    @"Uh-oh, it looks like providers may have failed to initialize!
+Please ping Kazumi#8495 or Biscuit#0001 in the goat place Discord and provide the Dalamud log.";
+            }
+        }
+
+        private bool InitializeProviders()
         {
             var ppType = typeof(IPlayerProvider);
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies().Where(a => a.FullName.Contains("FantasyPlayer")).ToList();
             var interfaces = new List<Type> { };
-            for (int i = 0; i < assemblies.Length; i++)
+            var errorFree = true;
+            for (int i = 0; i < assemblies.Count; i++)
             {
                 var potentiallyBad = assemblies[i];
                 try
@@ -53,20 +67,38 @@ namespace FantasyPlayer.Dalamud.Manager
                 {
                     PluginLog.LogError(rtle, rtle.Message, rtle.LoaderExceptions);
                     PluginLog.LogError($"Error loading Assembly while searching for PlayerProviders: \"{potentiallyBad.FullName}\"");
+                    foreach (var loaderException in rtle.LoaderExceptions)
+                    {
+                        PluginLog.Error($"Loader exception: \"{loaderException}\"");
+                    }
+
+                    errorFree = false;
+                }
+                catch (Exception e2)
+                {
+                    PluginLog.LogError(e2, e2.Message);
+                    errorFree = false;
+                }
+
+                foreach (var playerProvider in interfaces)
+                {
+                    PluginLog.Log("Found provider: " + playerProvider.FullName);
+                    InitializeProvider(playerProvider, (IPlayerProvider)Activator.CreateInstance(playerProvider));
                 }
             }
 
-            foreach (var playerProvider in interfaces)
-            {
-                PluginLog.Log("Found provider: " + playerProvider.FullName);
-                InitializeProvider(playerProvider,  (IPlayerProvider)Activator.CreateInstance(playerProvider));
-            }
+            return errorFree;
         }
 
         private void InitializeProvider(Type type, IPlayerProvider playerProvider)
         {
+            if (PlayerProviders.ContainsKey(type))
+                return;
+            
+            PluginLog.Log("Initializing provider: " + type.FullName);
             playerProvider.Initialize(_plugin);
             PlayerProviders.Add(type, playerProvider);
+            PluginLog.Log("Initialized provider: " + type.FullName);
 
             if (_plugin.Configuration.PlayerSettings.DefaultProvider == type.FullName)
                 CurrentPlayerProvider ??= playerProvider;

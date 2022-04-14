@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Linq;
 using System.Numerics;
-using Dalamud.Game.ClientState;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using FantasyPlayer.Dalamud.Config;
 using FantasyPlayer.Dalamud.Manager;
-using FantasyPlayer.Dalamud.Provider;
 using FantasyPlayer.Dalamud.Provider.Common;
 using ImGuiNET;
 
@@ -36,7 +35,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _plugin = plugin;
             _playerManager = _plugin.PlayerManager;
 
-            var cmdManager = _plugin.CommandManager;
+            var cmdManager = _plugin.FPCommandManager;
 
             cmdManager.Commands.Add("display",
                 (OptionType.Boolean, new string[] { }, "Toggle player display.", OnDisplayCommand));
@@ -50,7 +49,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             _lastId = playerProvider.PlayerState.ServiceName;
             //TODO: Add and remove command handlers based on provider settings, those need to be added too
 
-            var cmdManager = _plugin.CommandManager;
+            var cmdManager = _plugin.FPCommandManager;
 
             cmdManager.Commands.Remove("shuffle");
             cmdManager.Commands.Remove("next");
@@ -80,7 +79,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
 
         private void CheckClientState()
         {
-            var isBoundByDuty = _plugin.PluginInterface.ClientState.Condition[ConditionFlag.BoundByDuty];
+            var isBoundByDuty = _plugin.Condition[ConditionFlag.BoundByDuty];
             if (_plugin.Configuration.AutoPlaySettings.PlayInDuty && isBoundByDuty &&
                 !_playerManager.CurrentPlayerProvider.PlayerState.IsPlaying)
             {
@@ -97,7 +96,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
         public void WindowLoop()
         {
             if (_plugin.Configuration.PlayerSettings.OnlyOpenWhenLoggedIn &&
-                _plugin.PluginInterface.ClientState.LocalContentId == 0)
+                _plugin.ClientState.LocalContentId == 0)
                 return; //Do nothing
 
             if (_playerManager.CurrentPlayerProvider == null &&
@@ -534,7 +533,7 @@ namespace FantasyPlayer.Dalamud.Interface.Window
             string displayInfo = null;
             if (_playerManager.CurrentPlayerProvider.PlayerState.CurrentlyPlaying.Id != null)
                 displayInfo = _playerManager.CurrentPlayerProvider.PlayerState.CurrentlyPlaying.Name;
-            _plugin.DisplayMessage($"Playing '{displayInfo}'...");
+            _plugin.DisplaySongTitle(displayInfo); //$"Playing '{displayInfo}'..."
             _playerManager.CurrentPlayerProvider.SetPauseOrPlay(true);
         }
 

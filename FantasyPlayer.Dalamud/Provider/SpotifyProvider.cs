@@ -1,7 +1,10 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using FantasyPlayer.Dalamud.Provider.Common;
 using FantasyPlayer.Spotify;
+using FantasyPlayer.Dalamud.Util;
 using SpotifyAPI.Web;
 
 namespace FantasyPlayer.Dalamud.Provider
@@ -14,8 +17,10 @@ namespace FantasyPlayer.Dalamud.Provider
         private SpotifyState _spotifyState;
         private string _lastId;
         
-        private Thread _startThread;
-        private Thread _loginThread;
+        private Task _startTask;
+        private readonly CancellationTokenSource _startTokenSource = new();
+        private Task _loginTask;
+        private readonly CancellationTokenSource _loginTokenSource = new();
 
         public void Initialize(Plugin plugin)
         {
@@ -34,15 +39,15 @@ namespace FantasyPlayer.Dalamud.Provider
             
             if (_plugin.Configuration.SpotifySettings.TokenResponse == null) return;
             _spotifyState.TokenResponse = _plugin.Configuration.SpotifySettings.TokenResponse;
-            _spotifyState.RequestToken();
-            _startThread = new Thread(_spotifyState.Start);
-            _startThread.Start();
+            _spotifyState.RequestToken().Forget();
+            _startTask = new Task(_spotifyState.Start, _startTokenSource.Token);
+            _startTask.Start();
         }
 
         private void OnPlayerStateUpdate(CurrentlyPlayingContext currentlyPlaying, FullTrack playbackItem)
         {
             if (playbackItem.Id != _lastId)
-                _plugin.DisplayMessage($"Playing '{playbackItem.Name}'...");
+                _plugin.DisplaySongTitle(playbackItem.Name);
             _lastId = playbackItem.Id;
 
 
@@ -82,7 +87,7 @@ namespace FantasyPlayer.Dalamud.Provider
             {
                 if (!_plugin.Configuration.SpotifySettings.LimitedAccess
                 ) //Do a check to not spam the user, I don't want to force it down their throats. (fuck marketing)
-                    _plugin.PluginInterface.Framework.Gui.Chat.PrintError(
+                    _plugin.ChatGui.PrintError(
                         "Uh-oh, it looks like you're not premium on Spotify. Some features in Fantasy Player have been disabled.");
 
                 _plugin.Configuration.SpotifySettings.LimitedAccess = true;
@@ -108,16 +113,17 @@ namespace FantasyPlayer.Dalamud.Provider
 
         public void Dispose()
         {
-            _startThread?.Abort();
-            _loginThread?.Abort();
+            _startTokenSource?.Cancel();
+            _loginTokenSource?.Cancel();
             _spotifyState.OnLoggedIn -= OnLoggedIn;
             _spotifyState.OnPlayerStateUpdate -= OnPlayerStateUpdate;
+            ((IDisposable)_spotifyState).Dispose();
         }
 
         public void StartAuth()
         {
-            _loginThread = new Thread(_spotifyState.StartAuth);
-            _loginThread.Start();
+            _loginTask = new Task(_spotifyState.StartAuth, _loginTokenSource.Token);
+            _loginTask.Start();
 
             var playerStateStruct = PlayerState;
             playerStateStruct.IsAuthenticating = true;
